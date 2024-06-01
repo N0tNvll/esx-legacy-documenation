@@ -46,7 +46,7 @@ const config: DocsThemeConfig = {
   },
   docsRepositoryBase: 'https://github.com/esx-framework/docs-rewrite/',
   footer: {
-    text: <span>
+    content: <span>
       <a href="https://www.esx-framework.org/" target="_blank">
         Copyright © {new Date().getFullYear()} ESX. All rights reserved.
       </a>
