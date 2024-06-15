@@ -1,0 +1,13 @@
+{
+    "index": "Introduction",
+    "esx_core": "ESX Core",
+    "contact": {
+        "title": "Hosting",
+        "type": "page",
+        "href": "https://www.oxygenserv.com/en/",
+        "newWindow": true
+    },
+    "tutorial": "Tutorial",
+    "troubleshoot": "Common Issues"
+}
+

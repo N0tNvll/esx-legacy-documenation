@@ -33,56 +33,59 @@ function ThemedImage() {
 }
 
 const config: DocsThemeConfig = {
-  color: {
-    hue: {
-      light: 29,
-      dark: 29,
-    },
+  primaryHue: {
+    light: 29,
+    dark: 29
   },
   logo: ThemedImage,
   project: {
-    link: "https://github.com/esx-framework",
+    link: 'https://github.com/esx-framework',
   },
   chat: {
-    link: "https://discord.esx-framework.org",
+    link: 'https://discord.esx-framework.org',
   },
-  docsRepositoryBase: "https://github.com/esx-framework/docs-rewrite",
+  docsRepositoryBase: 'https://github.com/esx-framework/docs-rewrite/',
   footer: {
-    content: (
-      <span>
-        <a href="https://www.esx-framework.org/" target="_blank">
-          Copyright © {new Date().getFullYear()} ESX. All rights reserved.
-        </a>
-        <br></br>
-        <a href="https://www.oxygenserv.com/en/" target="_blank">
-          Powered by Oxygenserv
-        </a>
-      </span>
-    ),
+    text: <span>
+      <a href="https://www.esx-framework.org/" target="_blank">
+        Copyright © {new Date().getFullYear()} ESX. All rights reserved.
+      </a>
+      <br></br>
+      <a href="https://www.oxygenserv.com/en/" target="_blank">
+        Powered by Oxygenserv
+      </a>
+    </span>
   },
-  head: () => (
-    <>
-      <title>ESX Documentation</title>
-      <meta name="description" content="ESX Documentation" />
-      <meta property="og:type" content="website" />
-      <meta property="og:locale" content="en_US" />
-      <meta
-        property="og:url"
-        content="https://documentation.esx-framework.org"
-      />
-      <meta property="og:title" content="ESX Documentation" />
-      <meta property="og:description" content="ESX Documentation" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta
-        name="keywords"
-        content="ESX, docs, documentation, ESX docs, ESX documentation, fivem documentation, fivem, fivem server, ESX framework, fivem server management, fivem franework, fivem server tutorial, fivem server management, reworked"
-      />
-      <link
-        rel="icon"
-        href="https://media.discordapp.net/attachments/1141377366589976747/1141617235752919040/favicon.png?width=320&height=320"
-      />
-    </>
-  ),
-};
+  useNextSeoProps() {
+    return {
+      title: 'ESX Documentation',
+      description: 'ESX Documentation',
+      openGraph: {
+        type: 'website',
+        locale: 'en_US',
+        url: 'https://documentation.esx-framework.org',
+        title: 'ESX Documentation',
+        description: 'ESX Documentation',
+      },
+
+      additionalMetaTags: [
+        {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1.0',
+        },
+        {
+          name: 'keywords',
+          content: 'ESX, docs, documentation, ESX docs, ESX documentation, fivem documentation, fivem, fivem server, ESX framework, fivem server management, fivem franework, fivem server tutorial, fivem server management, reworked',
+        },
+      ],
+      additionalLinkTags: [
+        { //can't understand how this pathing works so links needed
+          rel: 'icon',
+          href: 'https://media.discordapp.net/attachments/1141377366589976747/1141617235752919040/favicon.png?width=320&height=320',
+        },
+      ]
+    }
+  }
+}
 
 export default config

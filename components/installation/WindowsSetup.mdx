@@ -1,9 +1,9 @@
-import { Tabs, Callout } from 'nextra/components';
+import { Tabs, Tab, Callout } from 'nextra/components';
 
 # Database Setup
 To run a ESX Legacy Server you will need a Mysql Server as a database.
 <Tabs items={ ['MariaDB (Recomended)', 'XAMPP'] }>
-    <Tabs.Tab>
+    <Tab>
         ## MariaDB Method
         <Callout type="info">
             MariaDB is a community-developed, commercially supported fork of the MySQL database system improving performance and fixing bugs.
@@ -39,8 +39,8 @@ To run a ESX Legacy Server you will need a Mysql Server as a database.
         11. Select the database and click on OK.
         12. The only permissions that are required for an ESX-based FiveM server are `SELECT`, `ALTER`, `CREATE`, `DELETE`, `INSERT` and `UPDATE`. Expand the database `testserver`, tick the boxes next to the permissions just mentioned, then click on Save.
         
-    </Tabs.Tab>
-    <Tabs.Tab>
+    </Tab>
+    <Tab>
         ## XAMPP Method
         <Callout type="warning">
             Running a XAMPP Server is not recommended as it is slow. But it will do it's job for a development environment. **It should not be used in production!**
@@ -57,7 +57,7 @@ To run a ESX Legacy Server you will need a Mysql Server as a database.
         - Press Start on the top [2 boxes](https://prnt.sc/fIyfBJK3o2zM)
         - This should turn `Apache` and `MySQL` [Green](https://prnt.sc/uByIP-SC6Z1f)
         
-    </Tabs.Tab>
+    </Tab>
 </Tabs>
 
 ### Installing the Server
