@@ -1,4 +1,4 @@
-export default {
+{
     "es_extended": "es_extended",
     "esx_context": "esx_context",
     "esx_identity": "esx_identity",

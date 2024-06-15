@@ -1,6 +1,6 @@
 import LinuxSetup from 'components/installation/LinuxSetup.mdx';
 import WindowsSetup from 'components/installation/WindowsSetup.mdx';
-import { Tabs, Steps, Callout } from 'nextra/components';
+import { Tabs, Steps, Tab, Callout } from 'nextra/components';
 import { DsButton } from 'components/button';
 import { HeadingTitle } from "components/utility";
 
@@ -25,12 +25,12 @@ Two methods of installation will be presented below, the method for setting up a
 Please choose which Platform you use
 <Tabs items={['Windows', 'Linux']}>
   <Steps>
-    <Tabs.Tab>
+    <Tab>
       <WindowsSetup />
-    </Tabs.Tab>
-    <Tabs.Tab>
+    </Tab>
+    <Tab>
       <LinuxSetup />
-    </Tabs.Tab>
+    </Tab>
 
     ### Deploying the Server
     1. Assuming you are now on a menu similar to [this](https://prnt.sc/pvRbppA5_s7e), click `Next`.
