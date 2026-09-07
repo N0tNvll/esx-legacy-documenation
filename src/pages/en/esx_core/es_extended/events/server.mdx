@@ -297,3 +297,113 @@ AddEventHandler('esx:jobsRefreshed', function()
     end
 end)
 ```
+
+### esx:onPlayerJoined
+This event is triggered before the player's ESX data is loaded, when the character selection/join is complete. With esx_multicharacter, it is a global event with the character selected.
+
+**Arguments**
+- src: `number`
+  - The player's server id (when using multichar).
+- char: `string?`
+  - The character name/selection (only with esx_multicharacter).
+- data: `table?`
+  - Optional user data passed by multicharacter when creating a new character.
+
+**Example**
+```lua
+AddEventHandler('esx:onPlayerJoined', function (src, char, data)
+    print("Player " .. src .. " joined and is about to be loaded.")
+end)
+```
+
+### esx:jobCreated
+This event is triggered after a new job is created at runtime via [ESX.CreateJob()](/esx_core/es_extended/server/functions#createjob).
+
+**Arguments**
+- jobName: `string`
+  - The name of the created job.
+- job: `table`
+  - The created job table (with grades).
+
+**Example**
+```lua
+AddEventHandler('esx:jobCreated', function (jobName, job)
+    print("Job " .. jobName .. " was created with " .. xLib.table.sizeOf(job.grades) .. " grade(s).")
+end)
+```
+
+### esx:jobRefreshed
+This event is triggered after a single job is refreshed via [ESX.RefreshJob()](/esx_core/es_extended/server/functions#refreshjob).
+
+**Arguments**
+- jobName: `string`
+  - The name of the refreshed job.
+- job: `table`
+  - The refreshed job table.
+
+**Example**
+```lua
+AddEventHandler('esx:jobRefreshed', function (jobName, job)
+    print("Job " .. jobName .. " was refreshed.")
+end)
+```
+
+### esx:jobRemoved
+This event is triggered when a stale job (missing from the database or with no grades) is removed during a refresh.
+
+**Arguments**
+- jobName: `string`
+  - The name of the removed job.
+- reason: `string`
+  - The reason it was removed (e.g. `"missing job"`, `"no job grades found"`).
+
+**Example**
+```lua
+AddEventHandler('esx:jobRemoved', function (jobName, reason)
+    print("Job " .. jobName .. " was removed because: " .. reason)
+end)
+```
+
+### esx:createdExtendedVehicle
+This event is triggered when an extended vehicle is created via [ESX.CreateExtendedVehicle()](/esx_core/es_extended/server/functions#createextendedvehicle).
+
+**Arguments**
+- xVehicle: `table`
+  - The created `CExtendedVehicle` object.
+
+**Example**
+```lua
+AddEventHandler('esx:createdExtendedVehicle', function (xVehicle)
+    print("Extended vehicle spawned with plate " .. xVehicle:getPlate())
+end)
+```
+
+### esx:deletedExtendedVehicle
+This event is triggered when an extended vehicle is deleted (stored) via `xVehicle:delete()`.
+
+**Arguments**
+- xVehicle: `table`
+  - The deleted `CExtendedVehicle` object.
+
+**Example**
+```lua
+AddEventHandler('esx:deletedExtendedVehicle', function (xVehicle)
+    print("Extended vehicle with plate " .. xVehicle:getPlate() .. " was stored.")
+end)
+```
+
+### esx:changedExtendedVehiclePlate
+This event is triggered when an extended vehicle's plate is changed via `xVehicle:setPlate()`.
+
+**Arguments**
+- plate: `string`
+  - The new (current) plate.
+- oldPlate: `string`
+  - The previous plate.
+
+**Example**
+```lua
+AddEventHandler('esx:changedExtendedVehiclePlate', function (plate, oldPlate)
+    print("Plate changed from " .. oldPlate .. " to " .. plate)
+end)
+```

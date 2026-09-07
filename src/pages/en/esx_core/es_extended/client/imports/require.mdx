@@ -26,3 +26,45 @@ require '@resource.client.modname'
 </Callout>
 
 > Credit to [Overextended](https://overextended.dev/ox_lib/Modules/Require/Shared) for the documentation.
+
+## ESX.load
+
+Loads and runs a Lua file at the given path relative to the calling resource. Unlike `require`, the chunk is **not** cached for future use.
+
+**Arguments**
+- filePath: `string`
+  - The path to the file. Use `.` to separate directories.
+
+**Example**
+```lua
+ESX.load('modules.myModule') -- loads and runs modules/myModule.lua
+```
+
+## ESX.loadJson
+
+Loads and decodes a `.json` file at the given path relative to the calling resource.
+
+**Arguments**
+- filePath: `string`
+  - Path to the JSON file (without the `.json` extension).
+
+**Returns**
+- data: `table`
+  - The decoded JSON table.
+
+**Example**
+```lua
+local data = ESX.loadJson('config.test')
+```
+
+## ESX.require
+
+Loads the given module and caches the result. Passing `@resourceName.modName` loads a module from a remote resource.
+
+**Arguments**
+- modName: `string`
+  - The module name. Use `/` separators for relative paths.
+
+**Returns**
+- module: `unknown`
+  - The loaded module (any value returned by the module).

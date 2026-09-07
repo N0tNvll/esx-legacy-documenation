@@ -326,6 +326,28 @@ AddEventHandler('esx:onPlayerJoined', function ()
 end)
 ```
 
+## GetPlayerIdFromIdentifier
+This function returns the server id of a player from their identifier.
+
+**Arguments**
+- identifier: `string`
+  - The player's identifier (e.g. `license:xxxxxxxx`).
+
+**Returns**
+The server id of the player, or `nil` if not found.
+
+**Example**
+```lua
+local identifier = "license:xxxxxxxxx"
+local playerId = ESX.GetPlayerIdFromIdentifier(identifier)
+
+if playerId then
+    print(("Player %s has the identifier %s."):format(playerId, identifier))
+else
+    print("No player online with that identifier.")
+end
+```
+
 ## GetVehicleType
 This function returns the vehicle type of the speicified vehicle.
 
@@ -717,3 +739,103 @@ local notifyMessage = "Hello, World!"
 -- Triggers 'resource:client:showJobNotification' for all players in the jobPlayerIds array.
 ESX.TriggerClientEvent("resource:client:showJobNotification", jobPlayerIds, notifyTitle, notifyMessage) 
 ```
+
+## Extended Vehicle API
+The Extended Vehicle API works with the player-owned vehicles tracked in the `owned_vehicles` table. It returns `CExtendedVehicle` objects that wrap a live server-side vehicle entity and let you read/mutate it.
+
+### CreateExtendedVehicle
+Creates (spawns) an extended vehicle for a player and marks it as no longer stored. Returns the existing vehicle if one already exists for that plate.
+
+**Arguments**
+- owner: `string`
+  - The vehicle owner's identifier.
+- plate: `string`
+  - The vehicle's plate.
+- coords: `vector4`
+  - Position and heading to spawn the vehicle at.
+
+**Returns**
+- xVehicle: `table` | `nil`
+  - The `CExtendedVehicle` object, or `nil` if the vehicle couldn't be found/spawned.
+
+**Example**
+```lua
+local owner = "license:xxxxxxxx"
+local plate = "ABC123"
+local coords = vec4(0.0, 0.0, 28.0, 90.0)
+
+local xVehicle = ESX.CreateExtendedVehicle(owner, plate, coords)
+if xVehicle then
+    print("Vehicle spawned with net id: " .. xVehicle:getNetId())
+end
+```
+
+### GetExtendedVehicleFromPlate
+Returns the `CExtendedVehicle` object for a plate, if it currently exists server-side.
+
+**Arguments**
+- plate: `string`
+  - The vehicle's plate.
+
+**Returns**
+- xVehicle: `table` | `nil`
+  - The `CExtendedVehicle` object, or `nil` if not currently spawned/tracked.
+
+**Example**
+```lua
+local xVehicle = ESX.GetExtendedVehicleFromPlate("ABC123")
+if xVehicle then
+    print("Found vehicle, entity: " .. xVehicle:getEntity())
+end
+```
+
+### CExtendedVehicle methods
+The returned object exposes the following methods:
+
+| Method | Arguments | Returns | Description |
+|---|---|---|---|
+| `:isValid()` | - | `boolean` | Whether the tracked vehicle still exists and matches its stored state. |
+| `:getNetId()` | - | `number?` | The vehicle's network id. |
+| `:getEntity()` | - | `number?` | The vehicle's entity handle. |
+| `:getPlate()` | - | `string?` | The vehicle's plate. |
+| `:getModelHash()` | - | `number?` | The vehicle's model hash. |
+| `:getOwner()` | - | `string?` | The vehicle owner's identifier. |
+| `:setPlate()` | `newPlate` | `boolean` | Changes the plate in the DB and on the entity. |
+| `:setProps()` | `newProps` | `boolean` | Updates the stored vehicle properties. |
+| `:setOwner()` | `newOwner` | `boolean` | Transfers ownership of the vehicle. |
+| `:delete()` | `garageName?`, `isImpound?` | - | Marks the vehicle as stored (optionally in a garage/impound) and deletes the entity. |
+
+**Example**
+```lua
+local xVehicle = ESX.GetExtendedVehicleFromPlate("ABC123")
+if xVehicle then
+    if xVehicle:getOwner() == "license:xxxxxxxx" then
+        xVehicle:setOwner("license:yyyyyyy")
+    end
+    xVehicle:delete("some_garage")
+end
+```
+
+## Migrations
+es_extended ships with an automatic migration system that runs on server start. It applies SQL changes needed for newer ESX versions, and tracks which migrations already ran using resource KVPs (`esx_migration:<version>`).
+
+Migrations run in order for each version folder under `server/migration/`. If a migration requires it, the server prompts for a restart.
+
+### Reset migrations
+To re-run all migrations (for example after fixing a failed one), use the `resetmigrations` command from the server console:
+
+```bash
+resetmigrations
+```
+
+This deletes the `esx_migration:*` KVPs so all migrations will run again on the next server start.
+
+### Bundled migrations
+
+| Version | Name | What it does |
+|---|---|---|
+| v1.13.3 | `ssn` | Adds the `ssn` column and a unique `ssn` index to `users`, then generates a unique SSN for every existing user. |
+| v1.13.5 | `jobTypes` | Adds the `type` column (`VARCHAR(50)` default `'civ'`) to the `jobs` table. |
+| v1.14.2 | `billingTargetLength` | Widens the `billing.target` column to `VARCHAR(60)`. |
+| v1.14.2 | `multicharDeleteIndexes` | Adds indexes on character-deletion columns (`billing.identifier`, `owned_vehicles.owner`, `user_licenses.owner`, `society_moneywash.identifier`, `addon_account_data.owner`, `addon_inventory_items.owner`, `datastore_data.owner`) to speed up multicharacter deletion. |
+| v1.14.2 | `rentedVehiclesOwnerLength` | Widens the `rented_vehicles.owner` column to `VARCHAR(60)`. |

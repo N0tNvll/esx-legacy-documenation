@@ -174,6 +174,23 @@ local success, err = ESX.ValidateType("hello", "string", "number") -- true
 local success, err = ESX.ValidateType(123, "string") -- false, "bad value (string expected, got number)"
 ```
 
+## AssertType
+Same as [ValidateType](#validatetype), but throws an assertion error when the value does not match the expected types.
+
+**Arguments**  
+- `...`: any  
+  The value to validate, followed by one or more strings representing the Lua types to check against.
+
+**Returns**
+- `success`: boolean  
+  Returns `true` if the value matches one of the given types.
+
+**Example**
+```lua
+ESX.AssertType(source, "number")
+ESX.AssertType("hello", "string", "number") -- false -> assertion error
+```
+
 ## IsValidLocaleString  
 Checks whether a string contains only valid characters according to the current locale and optional digit allowance.
 

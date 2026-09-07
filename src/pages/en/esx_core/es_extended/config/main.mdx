@@ -22,6 +22,13 @@ A bridge is needed to make this work. By default we provide a bridge for [ox_inv
 Config.CustomInventory = 'ox'
 ```
 
+### EnableDefaultInventory
+This config property is auto-set based on `Config.CustomInventory`. When `Config.CustomInventory` is `false`, the default inventory (opened with **F2**) is enabled. Do not change this manually.
+
+```lua
+Config.EnableDefaultInventory = Config.CustomInventory == false
+```
+
 ### Accounts
 With this config property you can specify what money accounts the player has. New accounts can be added in this format:
 ```lua
@@ -74,8 +81,11 @@ Config.DefaultSpawns = {
 ```
 
 ### AdminGroups
+<Callout type="warning">
+  **Deprecated** - Use `Config.CommandPermissions` as the single source of truth for command ACLs. Kept temporarily for backwards compatibility with external resources that still read `Config.AdminGroups`. Will be removed in a future version.
+</Callout>
+
 With this config property you can specify the groups that should be considered an "admin" by esx. This is used to give the player admin if he has one of the roles when creating a character.
-You can also use this by using the callback `esx:isUserAdmin`.
 
 **Example**
 ```lua
@@ -83,6 +93,52 @@ Config.AdminGroups = {
 	['owner'] = true,
 	['sradmin'] = true,
   ['admin'] = true,
+}
+```
+
+### CommandPermissions
+With this config property you can control which ACE groups (or `user`) are allowed to use each admin command. This is the single source of truth for command ACLs.
+
+Each command maps to a list of allowed ACE groups. The special value `"user"` makes the command available to all players.
+
+**Example**
+```lua
+Config.CommandPermissions = {
+    ["setcoords"]           = { "owner", "admin" },
+    ["setjob"]              = { "owner", "admin" },
+    ["car"]                 = { "owner", "admin" },
+    ["cardel"]              = { "owner", "admin" },
+    ["fix"]                 = { "owner", "admin" },
+    ["setaccountmoney"]     = { "owner", "admin" },
+    ["giveaccountmoney"]    = { "owner", "admin" },
+    ["removeaccountmoney"]  = { "owner", "admin" },
+    ["giveitem"]            = { "owner", "admin" },
+    ["giveweapon"]          = { "owner", "admin" },
+    ["giveammo"]            = { "owner", "admin" },
+    ["giveweaponcomponent"] = { "owner", "admin" },
+    ["clearall"]            = { "owner", "admin" },
+    ["refreshjobs"]         = { "owner", "admin" },
+    ["refreshitems"]        = { "owner", "admin" },
+    ["clearinventory"]      = { "owner", "admin" },
+    ["clearloadout"]        = { "owner", "admin" },
+    ["setgroup"]            = { "owner", "admin" },
+    ["save"]                = { "owner", "admin" },
+    ["saveall"]             = { "owner", "admin" },
+    ["goto"]                = { "owner", "admin" },
+    ["bring"]               = { "owner", "admin" },
+    ["kill"]                = { "owner", "admin" },
+    ["freeze"]              = { "owner", "admin" },
+    ["unfreeze"]            = { "owner", "admin" },
+    ["setdim"]              = { "owner", "admin" },
+    ["players"]             = { "owner", "admin" },
+    ["noclip"]              = { "owner", "admin" },
+    ["tpm"]                 = { "owner", "admin" },
+    ["coords"]              = { "owner", "admin" },
+    ["clear"]               = { "user", "admin", "owner" },
+    ["group"]               = { "user", "admin", "owner" },
+    ["job"]                 = { "user", "admin", "owner" },
+    ["info"]                = { "user", "admin", "owner" },
+    ["playtime"]            = { "user", "admin", "owner" },
 }
 ```
 
@@ -95,6 +151,17 @@ With this config property you can specify if the paycheck's should be logged to 
 ### EnableSocietyPayouts
 With this config property you can specify if the society of the player's job should payout the paycheck. Set to `true` if you want to enable it and `false` to disable.
 
+### DefaultJobDuty
+With this config property you can specify the default duty status a player gets when changing jobs. Set to `true` (on duty) or `false` (off duty).
+
+### OffDutyPaycheckMultiplier
+With this config property you can specify the multiplier applied to an off-duty player's paycheck. `0.5` means the player receives 50% of the on-duty paycheck.
+
+**Example**
+```lua
+Config.OffDutyPaycheckMultiplier = 0.5 -- 50% of the on duty paycheck
+```
+
 ### MaxWeight
 With this config property you can specify the Max Weight of the player without having a backpack on.
 
@@ -103,6 +170,21 @@ With this config property you can specify the interval in milliseconds the paych
 
 ### EnableDebug
 With this config property you can specify if Debug Information should be logged to the console. Set to `true` if you want to enable it and `false` to disable. This should be set to `false` on a normal production server.
+
+### SaveDeathStatus
+With this config property you can specify if the death status of a player should be saved. Set to `true` to save it (player keeps their death state when disconnecting) and `false` to disable.
+
+### LocaleFallback
+When a key is missing from the active locale, this config option controls whether the English string is used as a fallback instead of returning a placeholder. This is controlled by the `esx:localeFallback` convar.
+
+- Default: `true` (fall back to English).
+- Set to `"false"` to keep the placeholder (useful when authoring a new translation).
+
+**Example**
+server.cfg
+```lua
+setr esx:localeFallback "false"
+```
 
 ### Multichar
 This config property should normally not be touched if you are not using a multicharacter system or are using esx_multicharacter.
