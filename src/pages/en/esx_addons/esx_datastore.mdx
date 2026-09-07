@@ -29,7 +29,9 @@ A datastore must be configured in the `database` before using it. you **must** r
 
 ### API
 
-#### getInventory
+> **Note:** All these functions are also available as server-side globals (`GetDataStore`, `GetDataStoreOwners`, `GetSharedDataStore`) since they are declared as global functions in the resource.
+
+#### getDataStore
 
 - Event: `esx_datastore:getDataStore`
     - Usage: `TriggerEvent('esx_datastore:getDataStore', name, owner, function)`
@@ -40,7 +42,12 @@ A datastore must be configured in the `database` before using it. you **must** r
       end)
     ```
 
-#### getSharedInventory
+#### getDataStoreOwners
+
+- Event: `esx_datastore:getDataStoreOwners`
+    - Usage: `TriggerEvent('esx_datastore:getDataStoreOwners', name, function)`
+
+#### getSharedDataStore
 
 - Event: `esx_datastore:getSharedDataStore`
     - Usage: `TriggerEvent('esx_datastore:getSharedDataStore', name, function)`
@@ -52,5 +59,13 @@ A datastore must be configured in the `database` before using it. you **must** r
         store.set('weapons', weapons)
       end)
     ```
+
+### Server globals
+
+```lua
+GetDataStore(name, owner)       -- Returns a datastore belonging to a specific owner
+GetDataStoreOwners(name)        -- Returns all owners of a datastore
+GetSharedDataStore(name)        -- Returns a shared datastore
+```
 
 

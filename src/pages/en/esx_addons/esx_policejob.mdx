@@ -1,3 +1,223 @@
+import { Callout } from 'nextra/components';
+
 # esx_policejob
 
 [Github Link](https://github.com/esx-framework/ESX-Legacy-Addons/tree/main/%5Besx_addons%5D/esx_policejob)
+
+Allows Players to RP as Police Officers (cars, outfits, handcuffing etc).
+
+<Callout type="info">
+    This resource uses the modern `xLib` convention. Interaction is driven by keybinds registered with `xLib.addKeybind` instead of chat commands, and callbacks use `xLib.callback.registerCompat` / `xLib.callback`.
+</Callout>
+
+## Configuration
+
+- `Config.DrawDistance`
+    - type: `float`
+    - default: `10.0`
+    - description: The draw distance for the markers.
+- `Config.ActionVehicleDistance`
+    - type: `float`
+    - default: `2.0`
+    - description: Max distance for police vehicle actions (impound / lockpick target).
+- `Config.MarkerType`
+    - type: `table`
+    - default: `{Cloakrooms = 20, Armories = 21, BossActions = 22, Vehicles = 36, Helicopters = 34}`
+    - description: The draw marker types per station part.
+- `Config.MarkerSize`
+    - type: `table`
+    - default: `{x = 1.5, y = 1.5, z = 0.5}`
+    - description: The marker interaction size.
+- `Config.MarkerColor`
+    - type: `table`
+    - default: `{r = 50, g = 50, b = 204}`
+    - description: The marker color.
+- `Config.EnablePlayerManagement`
+    - type: `boolean`
+    - default: `true`
+    - description: Enables society managing / boss actions.
+- `Config.EnableArmoryManagement`
+    - type: `boolean`
+    - default: `false`
+    - description: Enables armory weapon/stock management (get/put weapon, stock deposit/withdraw).
+- `Config.EnableESXIdentity`
+    - type: `boolean`
+    - default: `true`
+    - description: Requires `esx_identity`. Shows DOB/height/sex on the ID card.
+- `Config.EnableESXOptionalneeds`
+    - type: `boolean`
+    - default: `false`
+    - description: Requires `esx_optionalneeds`. Shows BAC (from `esx_status` drunk status).
+- `Config.EnableLicenses`
+    - type: `boolean`
+    - default: `false`
+    - description: Requires `esx_license`. Enables license check and revoke.
+- `Config.EnableHandcuffTimer`
+    - type: `boolean`
+    - default: `true`
+    - description: Automatically unrestrains a cuffed player after the timer.
+- `Config.HandcuffTimer`
+    - type: `integer`
+    - default: `10 * 60000`
+    - description: Handcuff timer in milliseconds.
+- `Config.EnableCustomPeds`
+    - type: `boolean`
+    - default: `false`
+    - description: Enables custom ped options in the cloakroom.
+- `Config.EnableESXService`
+    - type: `boolean`
+    - default: `false`
+    - description: Requires `esx_service`. Enables the duty system.
+- `Config.MaxInService`
+    - type: `integer`
+    - default: `-1`
+    - description: Max officers in service. `-1` disables the limit.
+- `Config.EnableFinePresets`
+    - type: `boolean`
+    - default: `false`
+    - description: `true` uses the DB fine presets from `fine_types`; `false` uses custom amount/reason input.
+- `Config.OxInventory`
+    - type: `boolean`
+    - default: `ESX.GetConfig().OxInventory`
+    - description: Uses ox_inventory stash/player menus when `true`.
+- `Config.PoliceStations`
+    - type: `table`
+    - description: Table of police stations. Each contains `Blip`, `Cloakrooms`, `Armories`, `Vehicles`, `Helicopters` and `BossActions`.
+
+### `Config.PoliceStations` layout
+
+```lua
+Config.PoliceStations = {
+    LSPD = {
+        Blip = {
+            Coords = vector3(425.1, -979.5, 30.7),
+            Sprite = 60,
+            Display = 4,
+            Scale = 1.2,
+            Colour = 29,
+        },
+        Cloakrooms = {
+            vector3(452.6, -992.8, 30.6),
+        },
+        Armories = {
+            vector3(451.7, -980.1, 30.6),
+        },
+        Vehicles = {
+            {
+                Spawner = vector3(0.0, 0.0, 0.0),
+                InsideShop = vector3(0.0, 0.0, 0.0),
+                SpawnPoints = {
+                    {coords = vector3(0.0, 0.0, 0.0), heading = 0.0, radius = 4.0},
+                },
+            },
+        },
+        Helicopters = {
+            {
+                Spawner = vector3(0.0, 0.0, 0.0),
+                InsideShop = vector3(0.0, 0.0, 0.0),
+                SpawnPoints = {
+                    {coords = vector3(0.0, 0.0, 0.0), heading = 0.0, radius = 4.0},
+                },
+            },
+        },
+        BossActions = {
+            vector3(0.0, 0.0, 0.0),
+        },
+    },
+}
+```
+
+### `Config.AuthorizedVehicles` layout
+
+```lua
+Config.AuthorizedVehicles = {
+    car = {
+        officer = {
+            {model = 'police3', price = 20000},
+        },
+        sergeant = {
+            {model = 'policet', price = 18500},
+            {model = 'policeb', price = 30500},
+        },
+        lieutenant = {
+            {model = 'riot', price = 70000},
+            {model = 'fbi2', price = 60000},
+        },
+    },
+    helicopter = {
+        lieutenant = {
+            {model = 'polmav', price = 200000, props = {modLivery = 0}},
+        },
+        boss = {
+            {model = 'polmav', price = 100000},
+        },
+    },
+}
+```
+
+## Keybinds
+
+This resource uses keybinds instead of chat commands:
+
+- **E** (`police:interact`) - Contextual interaction at markers/menus.
+- **F6** (`police:quickactions`) - Opens the Police Actions menu.
+
+## Server Events
+
+| Event | Parameters | Description |
+|---|---|---|
+| `esx_policejob:impoundOwnedVehicle` | `plate` | Impounds a vehicle via `exports['esx_garage']:impoundVehicle(plate)`. |
+| `esx_policejob:confiscatePlayerItem` | `target`, `itemType`, `itemName`, `amount` | Transfers items/money/weapons from a cuffed target to the officer. |
+| `esx_policejob:handcuff` | `target` | Toggles handcuff state on a nearby target. |
+| `esx_policejob:drag` | `target` | Allows the officer to drag a cuffed target. |
+| `esx_policejob:putInVehicle` | `target` | Puts a cuffed target into a vehicle. |
+| `esx_policejob:OutVehicle` | `target` | Removes a cuffed target from a vehicle. |
+| `esx_policejob:getStockItem` | `itemName`, `count` | Withdraws items from the `society_police` inventory. |
+| `esx_policejob:putStockItems` | `itemName`, `count` | Deposits items into the `society_police` inventory. |
+
+## Callbacks
+
+All callbacks are registered with `xLib.callback.registerCompat` on the server and called from the client with `xLib.callback(...)`.
+
+| Callback | Parameters | Returns |
+|---|---|---|
+| `esx_policejob:getOtherPlayerData` | `target`, `notify` | `{name, job, grade, inventory, accounts, weapons, dob, height, sex, drunk, licenses}` |
+| `esx_policejob:getFineList` | `category` | Array of `{id, label, amount, category}` from `fine_types`. |
+| `esx_policejob:getVehicleInfos` | `plate` | `{plate, owner}` |
+| `esx_policejob:getArmoryWeapons` | - | Array of `{name, count}` from the `society_police` datastore. |
+| `esx_policejob:addArmoryWeapon` | `weaponName`, `removeWeapon` | `boolean` |
+| `esx_policejob:removeArmoryWeapon` | `weaponName` | `boolean` |
+| `esx_policejob:buyWeapon` | `weaponName`, `type`, `componentNum` | `boolean` |
+| `esx_policejob:buyJobVehicle` | `vehicleProps`, `type` | `boolean` |
+| `esx_policejob:storeNearbyVehicle` | `plates` | `plate` `string` or `false` |
+| `esx_policejob:getStockItems` | - | Array of society stock items. |
+| `esx_policejob:getPlayerInventory` | - | `{items = items}` |
+
+## Database
+
+Import `esx_policejob.sql`. It creates:
+
+- `addon_account` / `addon_account_data` entry `society_police` (shared).
+- `datastore` entry `society_police` (shared).
+- `addon_inventory` entry `society_police` (shared).
+- `jobs` entry `police` with grades: `recruit`, `officer`, `sergeant`, `lieutenant`, `boss`.
+- `fine_types` table with 52 default fines across 4 categories (Traffic, Minor, Average, Major).
+
+## Requirements
+
+- [es_extended](../esx_core/es_extended)
+- esx_billing
+- esx_vehicleshop
+
+### Optional Integrations
+
+- esx_society (boss menu)
+- esx_addoninventory (society stock)
+- esx_datastore (armory weapons)
+- esx_identity (EnableESXIdentity)
+- esx_license (EnableLicenses)
+- esx_service (EnableESXService)
+- esx_status / esx_optionalneeds (BAC)
+- esx_garage (impound)
+- esx_skin (uniforms)
+- ox_inventory (when Config.OxInventory is `true`)

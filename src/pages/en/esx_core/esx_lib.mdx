@@ -1,0 +1,122 @@
+# esx_lib
+
+The official ESX library - a port of `ox_lib`'s lazy-loading module system. It provides a global `xLib` namespace with on-demand (lazy) module loading, plus a cross-resource publish/subscribe system, callbacks, utilities (math, table, string, class, DUI, points, etc.) and Medal.tv clip integration.
+
+## The `imports.lua` mechanism
+
+Any resource that lists `@esx_lib/imports.lua` in its `shared_scripts` gets:
+
+- A `setmetatable` table `xLib` with `__index` and `__call` metamethods.
+- `_ENV.xLib = xLib` and `_ENV.require = xLib.require` (the global `require` becomes `xLib.require`).
+- On first access to `xLib.<module>` it lazily loads `imports/<name>/<side>.lua` (plus a prepended `shared.lua` if present) via `LoadResourceFile`. Modules are cached.
+- If a module has no local file, it **falls back to calling the `esx_lib` export**: `exports['esx_lib'][index](nil, ...)`.
+
+```lua
+-- shared_scripts in your fxmanifest.lua
+shared_scripts {
+    '@esx_lib/imports.lua',
+    '@es_extended/imports.lua',
+}
+```
+
+## Exports (from `resource/*`)
+
+The following are exposed dynamically by esx_lib to other resources:
+
+| Export | Side | Description |
+|---|---|---|
+| `setValidCallback` | shared | Marks a callback as registered to a resource, preventing overwrite. |
+| `isCallbackValid` | shared | Returns whether a callback name is registered. |
+| `pubsub_subscribe` | server | Subscribes a player to a topic. |
+| `pubsub_unsubscribe` | server | Unsubscribes a player from a topic. |
+| `pubsub_publish` | server | Pushes data to all subscribers of a topic. |
+| `pubsub_subscribers` | server | Lists the server IDs subscribed to a topic. |
+| `pubsub_isSubscribed` | server | Checks if a player is subscribed. |
+| `pubsub_clear` | server | Drops a topic and all its subscribers. |
+| `triggerClientEvent` | server | Batch server -> client trigger (packs the payload once with msgpack for arrays). |
+| `getMedalConfig` | client | Returns `Config.Medal`. |
+| `triggerMedalClip` | client | Instructs the Medal NUI to invoke a clip save. |
+
+### Example usage
+
+```lua
+-- Server
+exports.esx_lib:pubsub_subscribe(source, "esx_shops:247:stock")
+exports.esx_lib:pubsub_publish("esx_shops:247:stock", { qty = 5 })
+exports.esx_lib:triggerClientEvent("myEvent", { 1, 2, 3 }, "payload")
+
+-- Client
+exports['esx_lib']:getMedalConfig()
+exports['esx_lib']:triggerMedalClip("pub_key", "Death", { duration = 30 })
+```
+
+## Lazy-loaded modules (`xLib.*`)
+
+### Client
+
+- **`xLib.addKeybind`** - Registers a key + command.
+  ```lua
+  xLib.addKeybind({
+      name = "showinv",
+      description = "Open Inventory",
+      defaultKey = "F2",
+      onPressed = function() ShowInventory() end,
+  })
+  ```
+- **`xLib.cache`** - Live player state table (`playerId`, `ped`, `vehicle`, `seat`, `weapon`, plus lazy `coords`, `serverId`). Emits `xLib:cache:<key>` events on change.
+- **`xLib.colors`** - Brand palette from convars (`esx:brand-color`, `esx:darkest-color`, etc.).
+- **`xLib.dui`** - DUI object class: `xLib.dui:new({url, width, height})`, `:remove()`, `:setUrl()`, `:sendMessage()`, `:sendMouseMove/Down/Up/Wheel()`.
+- **`xLib.entity`** - `closest()`, `EnumerateWithinDistance()`, `Teleport()`.
+- **`xLib.game`** - Mirrors `ESX.Game`: `getPedMugshot`, `spawnObject/LocalObject`, `deleteVehicle/Object`, `spawnVehicle/LocalVehicle`, `isVehicleEmpty`, `getObjects/Peds/Vehicles/Players`, `getClosestObject/Ped/Player/Vehicle`, `getPlayersInArea/getVehiclesInArea`, `isSpawnPointClear`, `getVehicleInDirection`, `getVehicleProperties`, `setVehicleProperties`.
+- **`xLib.interactions`** - `register/remove(name, onPress, condition)` plus the built-in "E" keybind; `getInteractKey()` returns the current interact key.
+- **`xLib.point`** - Point class: `coords`, `distance`, `enter`, `leave`, `inside`, `:delete()`, `:toggle()`.
+- **`xLib.points`** - `create/remove/hide/startLoop()` - 2D point proximity detection.
+- **`xLib.pubsub`** - Client listener: `xLib.pubsub.on(topic, handler)`, `off(topic, handler)`.
+- **`xLib.raycast`** - `GetShapeTestResult`, `FromScreen`, `Start`, `:Stop()`, `:IsActive()`.
+- **`xLib.scaleform`** - `showFreemodeMessage`, `showBreakingNews`, `showPopupWarning`, `showTrafficMovie`, `utils.runMethod`, `utils.requestScaleformMovie`.
+- **`xLib.streaming`** - `requestModel`, `requestStreamedTextureDict`, `requestNamedPtfxAsset`, `requestAnimSet`, `requestAnimDict`, `requestWeaponAsset`, `requestAudioBank`.
+
+### Server
+
+- **`xLib.callback`** - Server callbacks:
+    - `xLib.callback(event, playerId, cb, ...)` - request from server.
+    - `xLib.callback.await(event, playerId, ...)` - blocking request.
+    - `xLib.callback.register(name, cb)` - register a callback.
+    - `xLib.callback.registerCompat(name, cb, owner)` - register a callback (compat wrapper).
+- **`xLib.onesync`** - `getPlayersInArea`, `getClosestPlayer`, `getPedsInArea`, `getObjectsInArea`, `getVehiclesInArea`, `getClosestPed/Object/Vehicle` (returns network IDs).
+- **`xLib.pubsub`** - Server wrapper: `subscribe/unsubscribe/publish/subscribers/isSubscribed/clear` (forwards to the exports).
+- **`xLib.rateLimiter`** - `xLib.rateLimiter({capacity, refill, interval, ...})` -> `:consume(key, cost)`, `:reset()`, `:clear()`, `:retryAfter()`, `:size()`.
+- **`xLib.token`** - `create({ttl, source?, data?})`, `consume(id, source?)`, `remove()`, `reset()`, `clear()`, `size()` - one-time single-use tokens.
+
+### Shared (client + server)
+
+- **`xLib.callback`** - The full client+server callback implementation. Convars: `xLib:callbackTimeout` (default 300000), `xLib:callbackValidationGrace` (default 15000).
+- **`xLib.class`** - `xLib.class(copy?)` class factory with `:new(...)` and `constructor`.
+- **`xLib.isEnhanced`** - Returns whether the game is GTA5 Enhanced Edition.
+- **`xLib.math`** - `clamp`, `toNumber`, `toScalars`, `toVector`, `normalToRotation`, `toRGBA`, `hexToRGBA`, `toHex`, `groupDigits`, `round`, `interpolate`, `lerp`, `inverseLerp`, `remap`, `Round`, `GroupDigits`, `Trim`, `Random`, `GetHeadingFromCoords`.
+- **`xLib.overload`** - `xLib.overload(name, valid_types, cb, obj?)` - dispatch based on argument types.
+- **`xLib.require`** / **`xLib.load`** / **`xLib.loadJson`** - Cross-resource require (`@resourceName/module` supported), plus `package.searchpath`, `package.searchers`, `package.loaded`.
+- **`xLib.string`** - `normalize`, `capitalize`, `toSnake`, `toCamel`, `toPascal`, `escapePattern`, `matchSafe`, `before`, `after`, `contains`, `replace`, `randomHex`, `uuid`.
+- **`xLib.table`** - Extends Lua `table`: `isArray`, `searchForKey`, `filter`, `deepcopy`, `merge`, `dump`, `sizeOf`, `set`, `indexOf`, `lastIndexOf`, `find`, `findIndex`, `map`, `reverse`, `clone`, `concat`, `join`, `contains`, `sort`, `toArray`, `wipe`.
+- **`xLib.timeout`** - `setTimeout(ms, cb)` and `clearTimeout(id)` (cancellable).
+- **`xLib.verify`** - `verify(value, valid_types, throw_error?)` - type validation supporting custom types (`array`, `int`, `uint`, `float`, `char`, `ped`, `vehicle`, `prop`, `playerId`, `class`, `model`). Also `verify.debug`.
+- **`xLib.waitFor`** - `waitFor(cb, errMessage?, timeout?, interval?)` - yields until cb returns non-nil.
+
+## Usage example
+
+```lua
+xLib.verify(target, 'playerId', true)
+
+local limiter = xLib.rateLimiter({ capacity = 5, refill = 5, interval = 1000 })
+if limiter:consume(source) then
+    -- rate limited action
+end
+
+xLib.addKeybind({
+    name = "interact",
+    defaultKey = "E",
+    onPressed = function()
+        -- interact
+    end,
+})
+```

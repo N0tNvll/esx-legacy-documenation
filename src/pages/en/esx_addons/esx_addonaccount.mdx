@@ -29,6 +29,8 @@ An addon account must be configured in the `database` before using it. you **mus
 
 ### API
 
+> **Note:** All these functions are also available as server-side globals (`GetAccount`, `GetSharedAccount`, `AddSharedAccount`) since they are declared as global functions in the resource.
+
 #### getAccount
 
 - Event: `esx_addonaccount:getAccount`
@@ -66,3 +68,23 @@ An addon account must be configured in the `database` before using it. you **mus
     local account = exports['esx_addonaccount']:GetSharedAccount('society_realestateagent')
     account.addMoney(500)
     ```
+
+#### addSharedAccount
+
+Adds a new shared account at runtime (inserts it into the database).
+
+- Export: `exports['esx_addonaccount']:AddSharedAccount`
+    - Usage: `exports['esx_addonaccount']:AddSharedAccount({name = 'society_mechanic', label = 'Mechanic'}, amount)`
+    - Parameters: `society` (table with `name` and `label`), `amount` (number, optional starting balance).
+    - Example:
+    ```lua
+    exports['esx_addonaccount']:AddSharedAccount({name = 'society_mechanic', label = 'Mechanic'}, 1000)
+    ```
+
+### Server globals
+
+```lua
+GetAccount(name, owner)               -- Returns an account belonging to a specific owner
+GetSharedAccount(name)                -- Returns a shared account
+AddSharedAccount({name, label}, amount) -- Creates a new shared account
+```

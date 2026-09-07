@@ -9,14 +9,12 @@ ESX Service is a basic script, that allows for on/off duty switching for players
 ### Enable Service
 
 ```lua
-ESX.TriggerServerCallback('esx_service:enableService', function(canTakeService, maxInService, inServiceCount)
-
+xLib.callback('esx_service:enableService', function(canTakeService, maxInService, inServiceCount)
   if canTakeService then
     ESX.ShowNotification('You enabled service')
   else
     ESX.ShowNotification('Service is full: ' .. inServiceCount .. '/' .. maxInService)
   end
-
 end, 'taxi')
 ```
 
@@ -25,3 +23,20 @@ end, 'taxi')
 ```lua
 TriggerServerEvent('esx_service:disableService', 'taxi')
 ```
+
+### Server Events
+
+| Event | Parameters | Description |
+|---|---|---|
+| `esx_service:activateService` | `service`, `maxInService` | Activates a service with a player limit. |
+| `esx_service:disableService` | `service` | Deactivates a service. |
+| `esx_service:notifyAllInService` | `service`, `message` | Sends a notification to every player currently in service. |
+
+### Server Callbacks
+
+| Callback | Parameters | Returns |
+|---|---|---|
+| `esx_service:enableService` | `service` | `canTakeService` (boolean), `maxInService` (integer), `inServiceCount` (integer). |
+| `esx_service:isInService` | `service` | `boolean` - whether the source player is in service. |
+| `esx_service:isPlayerInService` | `service`, `playerId` | `boolean` - whether a specific player is in service. |
+| `esx_service:getInServiceList` | `service` | Array of players currently in service. |

@@ -96,6 +96,7 @@ server_scripts {
 }
 
 shared_scripts {
+  '@esx_lib/imports.lua', -- Import the xLib library (optional but recommended)
   '@es_extended/imports.lua', -- Import ESX functions and PlayerData
   '@es_extended/locale.lua', -- Import the Locale system
 }
@@ -103,4 +104,24 @@ shared_scripts {
 dependencies {
   'es_extended' -- Ensure the script starts after es_extended so that the functions work.
 }
+```
+
+> **Tip:** The official ESX addons use [esx_lib](../esx_core/esx_lib) for callbacks (`xLib.callback.registerCompat` / `xLib.callback`), keybinds (`xLib.addKeybind`) and other utilities. See the [xLib documentation](../esx_core/esx_lib) for all available modules.
+
+### Client -> Server callbacks
+
+Modern ESX uses `xLib` for client/server callbacks:
+
+**Server (`server.lua`):**
+```lua
+xLib.callback.registerCompat('myScript:getMeme', function(source, cb)
+  cb('A very funny meme')
+end)
+```
+
+**Client (`client.lua`):**
+```lua
+xLib.callback('myScript:getMeme', function(meme)
+  print(meme)
+end)
 ```

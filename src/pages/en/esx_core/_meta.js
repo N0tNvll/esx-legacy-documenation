@@ -1,7 +1,9 @@
 export default {
   es_extended: "es_extended",
+  esx_lib: "esx_lib",
   esx_context: "Context",
   esx_identity: "Identity",
+  esx_inventory: "Inventory",
   esx_menu_default: "Menu Default",
   esx_menu_dialog: "Menu Dialog",
   esx_menu_list: "Menu List",
@@ -11,4 +13,7 @@ export default {
   esx_skin: "Skin",
   esx_textui: "Text UI",
   skinchanger: "Skinchanger",
+  cron: "Cron",
+  esx_loadingscreen: "Loadingscreen",
+  esx_chat_theme: "Chat Theme",
 };

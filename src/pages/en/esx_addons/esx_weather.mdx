@@ -1,0 +1,99 @@
+# esx_weather
+
+A zone-based weather and time synchronization system for ESX. Weather and time are synced per zone (Los Santos, Sandy Shores, Paleto Bay) with smooth weather transitions and per-zone time offsets. Includes an admin NUI panel to set weather per zone.
+
+## Configuration
+
+- `Config.debug`
+    - type: `boolean`
+    - default: `false`
+    - description: Enables debug print output on both client and server.
+- `Config.panelCommand`
+    - type: `string`
+    - default: `"weatherpanel"`
+    - description: Client command to open the admin NUI panel.
+- `Config.AdminGroups`
+    - type: `table`
+    - default: `{admin = true, moderator = true}`
+    - description: ESX groups allowed to use the weather panel and set weather.
+- `Config.Zones`
+    - type: `table`
+    - default: `{[Shared.Enum.Zone.LOS_SANTOS] = vector2(-33.6997, -1102.0), [Shared.Enum.Zone.SANDY_SHORES] = vector2(1728.2, 3709.3), [Shared.Enum.Zone.PALETO_BAY] = vector2(-220.2753, 6408.9116)}`
+    - description: Zone name mapped to a 2D world coordinate.
+- `Config.Weather.ValidTypes`
+    - type: `table`
+    - default: `{'CLEAR', 'CLOUDS', 'EXTRASUNNY', 'FOGGY', 'OVERCAST', 'RAIN', 'SMOG', 'THUNDER', 'CLEARING', 'XMAS', 'SNOW', 'SNOWLIGHT', 'BLIZZARD', 'HALLOWEEN', 'NEUTRAL', 'RAIN_HALLOWEEN', 'SNOW_HALLOWEEN'}`
+    - description: Weather types that can be cycled/applied.
+- `Config.Weather.transitionTimeSeconds`
+    - type: `integer`
+    - default: `30`
+    - description: Seconds for a smooth weather transition.
+- `Config.Weather.cycleTimeSeconds`
+    - type: `integer`
+    - default: `1800`
+    - description: Seconds between auto weather cycles.
+- `Config.Time.secondsPerGameMinute`
+    - type: `integer`
+    - default: `15`
+    - description: Real seconds per one GTA game minute.
+- `Config.Time.Zones`
+    - type: `table`
+    - default: `{[Shared.Enum.Zone.LOS_SANTOS] = 0, [Shared.Enum.Zone.SANDY_SHORES] = 1, [Shared.Enum.Zone.PALETO_BAY] = 2}`
+    - description: Hour offset applied per zone on top of the real-world time.
+
+## Zones
+
+The built-in zones are defined in `Shared.Enum.Zone`:
+
+- `Shared.Enum.Zone.LOS_SANTOS` - `"Los Santos"`
+- `Shared.Enum.Zone.SANDY_SHORES` - `"Sandy Shores"`
+- `Shared.Enum.Zone.PALETO_BAY` - `"Paleto Bay"`
+
+Weather types are defined in `Shared.Enum.WeatherType` (e.g. `CLEAR`, `EXTRASUNNY`, `RAIN`, `THUNDER`, `SNOW`, `NEUTRAL`, etc.).
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `/weatherpanel` | Opens the admin NUI panel (only for groups in `Config.AdminGroups`). |
+
+## Server Events
+
+| Event | Parameters | Description |
+|---|---|---|
+| `esx_weather:server:setZoneWeather` | `zone`, `weatherType` | Sets the weather for a zone. Server validates that the player is in an `AdminGroups` group, that the zone exists and the weather type is valid. Rate limited to 1 request per second. |
+
+## Client Events
+
+| Event | Payload | Description |
+|---|---|---|
+| `esx_weather:client:weather:setZones` | `WeatherByZone` (table) | Replaces the full zone-weather mapping. |
+| `esx_weather:client:weather:setZone` | `zone`, `weatherType` | Updates a single zone's weather. |
+| `esx_weather:client:time:setTime` | `currentTime` (serialized time) | Sets the synced server time. |
+
+## Exports
+
+### Client
+
+- `ToggleWeatherSync(toggle)` - `exports['esx_weather']:ToggleWeatherSync(false)` enables/disables client-side weather sync.
+- `ToggleTimeSync(toggle)` - `exports['esx_weather']:ToggleTimeSync(false)` enables/disables client-side time sync.
+
+## NUI Callbacks
+
+| Callback | Payload | Description |
+|---|---|---|
+| `ready` | - | Returns `{WeatherTypes}` to the UI. |
+| `setZoneWeather` | `{zoneName, weatherType}` | Triggers the server event to set weather. |
+| `close` | - | Releases NUI focus and closes the panel. |
+
+## How it works
+
+1. On resource start, the server assigns a random valid weather type to every zone and broadcasts the full state plus the server's real-world time to all players (`esx:playerLoaded` also re-sends state to joining players).
+2. The client main loop (every 1s) finds the closest zone and applies its weather with a smooth transition (`SetWeatherTypeOvertimePersist`).
+3. Time is synced from the server clock and per-zone hour offsets are applied; the client advances the in-game clock with `AdvanceClockTimeTo`.
+4. The server auto-cycles weather every `Config.Weather.cycleTimeSeconds` (default 30 minutes).
+5. Admins can manually set weather per zone via the `/weatherpanel` NUI.
+
+## Requirements
+
+- [es_extended](../esx_core/es_extended)

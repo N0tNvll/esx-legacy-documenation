@@ -1,0 +1,21 @@
+# esx_loadingscreen
+
+A simple but attractive server loading screen (branded ESX). Displays a progress bar, status text, rotating tips and an animated particle background.
+
+It uses FiveM's `loadscreen` NUI, with `loadscreen_manual_shutdown` enabled. The web UI reports `loadProgress` messages (0-1) and once the load fraction reaches 1 it posts to the `loadingComplete` NUI callback, which waits 2.5 seconds and then calls `ShutdownLoadingScreenNui()`.
+
+## Configuration
+
+All visuals (loading texts, tips, statuses, particle counts, rotation interval) are hardcoded in `web/script.js` and the HTML/CSS.
+
+## NUI Callbacks
+
+| Callback | Description |
+|---|---|
+| `loadingComplete` | Called by the web UI when the load fraction reaches 1; dismisses the loading screen after a short delay. |
+
+## Requirements
+
+- No dependencies.
+
+> **Note:** To replace it with your own loading screen, simply remove `ensure esx_loadingscreen` from your `server.cfg` and add yours in its place.

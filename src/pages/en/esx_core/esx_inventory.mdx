@@ -1,0 +1,146 @@
+# esx_inventory
+
+The NUI presentation layer for the ESX inventory. `es_extended` remains the authority on items, weight and validation; this resource is purely the display + slot grid + drag-and-drop UI, plus a generic "storage bridge" that any other resource can register to present a second panel (e.g. society stock).
+
+## Configuration
+
+- `Config.Locale`
+    - type: `string`
+    - default: `GetConvar("esx:locale", "en")`
+    - description: The active locale.
+- `Config.PlayerSlots`
+    - type: `integer`
+    - default: `25`
+    - description: Number of player inventory slots.
+- `Config.HotbarSlots`
+    - type: `integer`
+    - default: `5`
+    - description: Number of hotbar slots (the first N slots).
+- `Config.ItemImageUrl`
+    - type: `string`
+    - default: `"nui://esx_inventory/web/images/%s.png"`
+    - description: Item image URL template (`%s` = item name). Any http(s) URL template works.
+- `Config.NearbyPlayerDistance`
+    - type: `float`
+    - default: `3.0`
+    - description: Distance to scan for nearby players when giving items.
+- `Config.StorageBurst`
+    - type: `integer`
+    - default: `5`
+    - description: Rate-limiter token capacity for storage transfers.
+- `Config.StorageRefillInterval`
+    - type: `integer`
+    - default: `1000`
+    - description: Rate-limiter refill interval (ms) for storage transfers.
+
+Theme convars read at runtime: `esx:ui:primaryColor`, `esx:ui:secondaryColor`, `esx:ui:backgroundColor`, `esx:ui:accentColor`, `esx:ui:logoUrl`.
+
+## Exports
+
+### Client
+
+- `ShowInventory`
+```lua
+exports['esx_inventory']:ShowInventory()
+```
+Opens the inventory UI.
+
+### Server - Storage system
+
+#### `RegisterStorage`
+
+```lua
+exports.esx_inventory:RegisterStorage(storageId, definition)
+```
+
+Registers a storage. The definition must be synchronous (no awaits). Returns `true`/`false`.
+
+**Parameters**
+
+- `storageId` (string): unique storage identifier.
+- `definition` (table):
+    - `label` (string): display name.
+    - `slots` (integer): slot count shown in UI.
+    - `maxWeight` (number): weight bar capacity.
+    - `canAccess` (function): `function(xPlayer)` - synchronous access check.
+    - `getItems` (function): `function(xPlayer)` - returns `{name, label, count, weight}` entries.
+    - `putItem` (function): `function(xPlayer, itemName, count)` - atomic add, must return `true` only after the state actually changes.
+    - `takeItem` (function): `function(xPlayer, itemName, count)` - atomic remove, must return `true` only after the state actually changes.
+    - `coords` (vector3, optional): if set, transfers are refused beyond `distance`.
+    - `distance` (float, optional): max distance for transfers.
+
+```lua
+exports.esx_inventory:RegisterStorage("society_mechanic", {
+    label = "Mechanic Stock",
+    slots = 30,
+    maxWeight = 200,
+    canAccess = function(xPlayer)
+        return xPlayer.getJob().name == "mechanic"
+    end,
+    getItems = function(xPlayer) return stockItems end,
+    putItem = function(xPlayer, itemName, count) return addToStock(itemName, count) end,
+    takeItem = function(xPlayer, itemName, count) return removeFromStock(itemName, count) end,
+    coords = vector3(-342.29, -133.37, 39.0),
+    distance = 5.0,
+})
+```
+
+#### `UnregisterStorage`
+
+```lua
+exports.esx_inventory:UnregisterStorage(storageId)
+```
+
+Removes a storage and closes the storage UI for all viewers. Returns `boolean`.
+
+#### `OpenStorage`
+
+```lua
+exports.esx_inventory:OpenStorage(playerId, storageId)
+```
+
+Opens a storage for a player (checks access + distance). Returns `boolean`.
+
+## Events
+
+### Server
+
+| Event | Direction | Payload | Description |
+|---|---|---|---|
+| `esx_inventory:openStorage` | Server → Client | `{id, label, slots, maxWeight, items}` | Opens the storage UI (event alias of the `OpenStorage` export). |
+| `esx_inventory:refreshStorage` | Server → Client | `{id, ops}` | Updates storage contents (delta ops `set`/`remove`, or full snapshot). |
+| `esx_inventory:closeStorage` | Server → Client | - | Closes the storage panel. |
+
+### Client
+
+| Event | Direction | Payload | Description |
+|---|---|---|---|
+| `esx_inventory:storagePut` | Client → Server | `(itemName, count)` | Puts an item into the opened storage. |
+| `esx_inventory:storageTake` | Client → Server | `(itemName, count)` | Takes an item from the opened storage. |
+| `esx_inventory:storageClosed` | Client → Server | - | Informs the server the storage was closed. |
+
+## Keybinds
+
+- **F2** (`showinv`) - Toggles the inventory open/close.
+- **hotbar1..N** - Default unbound; uses the usable item in the corresponding hotbar slot.
+
+## NUI Callbacks
+
+| Callback | Payload | Description |
+|---|---|---|
+| `close` | - | Closes the UI. |
+| `saveSlots` | `{slots}` | Persists the slot map to KVP. |
+| `useItem` | `{name, type}` | Triggers `esx:useItem`. |
+| `giveItem` | `{name, type, target, count}` | Triggers `esx:giveInventoryItem`. |
+| `dropItem` | `{name, type, count}` | Triggers `esx:removeInventoryItem`. |
+| `getNearbyPlayers` | - | Returns nearby players within `Config.NearbyPlayerDistance`. |
+| `storagePut` | `{name, type, count}` | Triggers `esx_inventory:storagePut`. |
+| `storageTake` | `{name, count}` | Triggers `esx_inventory:storageTake`. |
+| `uiError` | - | Logs UI errors. |
+
+**Note:** `EnableDefaultInventory` must be enabled in the `es_extended` config (`ESX.GetConfig("EnableDefaultInventory")`), otherwise the resource errors on start.
+
+## Requirements
+
+- [es_extended](esx_extended)
+- esx_lib

@@ -1,7 +1,7 @@
 export default {
     esx_shops: "Shops",
     esx_weaponshop: "Weapon Shop",
-    esx_clotheshop: "Clothe Shop",
+    esx_clotheshop: "Clothes Shop",
     esx_vehicleshop: "Vehicle Shop",
     esx_accessories: "Accessories",
     esx_hud: "HUD",
@@ -33,5 +33,7 @@ export default {
     esx_datastore: "Datastore",
     esx_optionalneeds: "Optional Needs",
     esx_adminmenu: "Admin Menu",
+    esx_weather: "Weather",
+    esx_scoreboard: "Scoreboard",
 
 };

@@ -7,7 +7,7 @@ A script to get and set player clothing, accessoires and model used by `es_exten
 - isMale: `boolean`
   - Should the player be set to a male ped? 
 
-***Example**
+**Example**
 ```lua
 --- Set the player to the default male ped (mp_m_freemode_01)
 TriggerEvent('skinchanger:loadDefaultModel', true)
@@ -20,7 +20,7 @@ Used to set a skin of the local player, you can also only set specific component
 - skin: `table`
   - A table containing all skin details. 
 
-***Example**
+**Example**
 ```lua
 TriggerEvent('skinchanger:loadSkin', {
     sex          = 1,
@@ -63,7 +63,7 @@ TriggerEvent('skinchanger:loadSkin', {
 - callback: `function`
   - Callback function that will return the data 
 
-***Example**
+**Example**
 ```lua
 TriggerEvent('skinchanger:getData', function(components, maxVals)
     print(('Components => %s'):format(json.encode(components)))
@@ -76,7 +76,7 @@ end)
 - callback: `function`
   - Callback function that will return the data 
 
-***Example**
+**Example**
 ```lua
 TriggerEvent('skinchanger:getSkin', function(skin)
     print(('%s'):format(json.encode(skin)))

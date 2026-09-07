@@ -1,0 +1,120 @@
+# esx_scoreboard
+
+ESX Scoreboard with active jobs, robberies and activities. A modern Svelte 5-based scoreboard UI that shows online players, active jobs with colored badges, and live activities pushed by other resources.
+
+## Configuration
+
+- `Config.Debug`
+    - type: `boolean`
+    - default: `false`
+    - description: Enable debug logging.
+- `Config.OpenKey`
+    - type: `string`
+    - default: `"Z"`
+    - description: Keybind to open/close the scoreboard.
+- `Config.SummaryInterval`
+    - type: `number`
+    - default: `10000`
+    - description: ms between summary broadcasts to open clients.
+- `Config.PageRefreshInterval`
+    - type: `number`
+    - default: `15000`
+    - description: ms between auto-refresh of player pages for open clients.
+- `Config.PingRefreshInterval`
+    - type: `number`
+    - default: `30000`
+    - description: ms between server-side ping value refreshes.
+- `Config.FullReconcileInterval`
+    - type: `number`
+    - default: `60000`
+    - description: ms between full ESX player list reconciliation.
+- `Config.DefaultPageSize`
+    - type: `number`
+    - default: `50`
+    - description: Default rows per page.
+- `Config.MaxPageSize`
+    - type: `number`
+    - default: `100`
+    - description: Hard cap for rows per page.
+- `Config.ServerName`
+    - type: `string`
+    - default: `"ESX Server"`
+    - description: Server name shown in the scoreboard header.
+- `Config.MaxPlayers`
+    - type: `number | nil`
+    - default: `nil`
+    - description: Max players shown in header; `nil` = use `sv_maxclients` convar.
+- `Config.LogoUrl`
+    - type: `string`
+    - default: `""`
+    - description: HTTPS logo URL for the header. Empty = ESX placeholder logo.
+- `Config.Jobs`
+    - type: `table`
+    - description: Job definitions with labels and colors (e.g. `{police = {label = "Police", color = "#3B82F6"}}`).
+- `Config.ActivityTypes`
+    - type: `table`
+    - description: Activity type definitions with labels and icons (e.g. `{robbery = {label = "Robbery", icon = "..."}}`).
+
+## Keybind & Command
+
+- **Z** (default, remappable) - Toggles the scoreboard.
+- **/scoreboard** - Always available, toggles the scoreboard.
+
+## Exports
+
+### Server - Activities API
+
+```lua
+-- Add an activity. Returns an activityId (or -1 on error).
+local activityId = exports['esx_scoreboard']:AddActivity('robbery', 'Fleeca Bank', 'Little Seoul', {players})
+
+-- Update an activity.
+local ok = exports['esx_scoreboard']:UpdateActivity(activityId, {label = 'New label', location = 'New location', players = {players}})
+
+-- Remove an activity.
+local ok = exports['esx_scoreboard']:RemoveActivity(activityId)
+
+-- Get all active activities.
+local activities = exports['esx_scoreboard']:GetActiveActivities()
+```
+
+## Events
+
+### Server
+
+| Event | Direction | Payload | Description |
+|---|---|---|---|
+| `esx_scoreboard:server:open` | Client → Server | - | Opens the scoreboard and requests initial data. |
+| `esx_scoreboard:server:requestData` | Client → Server | - | Alias for `open`, used to refresh data. |
+| `esx_scoreboard:server:requestPage` | Client → Server | `{page, pageSize, search, sortBy, sortAsc}` | Requests a page of players. |
+| `esx_scoreboard:server:close` | Client → Server | - | Stops pushing updates to the client. |
+| `esx_scoreboard:client:receiveSummary` | Server → Client | `summary` | Pushes job counts, activities and server info. |
+| `esx_scoreboard:client:receivePage` | Server → Client | `page` | Pushes a page of player data. |
+| `esx_scoreboard:client:receiveActivities` | Server → Client | `activities` | Pushes activity updates. |
+
+## NUI Callbacks
+
+| Callback | Payload | Description |
+|---|---|---|
+| `closeScoreboard` | - | Closes the scoreboard UI. |
+| `nuiReady` | - | Sends theme colors to the UI. |
+| `requestPlayersPage` | `{page, pageSize, search, sortBy, sortAsc}` | Requests a new page of players (search/sort/pagination). |
+
+## How it works
+
+The server maintains in-memory caches of all players (from `ESX.GetPlayerFromId`), job counters (from `ESX.GetJobs`) and activities. When a player opens the scoreboard (default **Z**), the server sends a summary plus the first page of players. Background loops refresh pings every 30s, page contents every 15s, summaries every 10s and a full reconcile every 60s.
+
+Player names, jobs and grades are read from the ESX xPlayer object. Other resources can push live activities (robberies, heists, drug sales, races, etc.) via the server exports.
+
+## Requirements
+
+- [es_extended](../esx_core/es_extended)
+- esx_lib
+
+## Development
+
+```bash
+cd web
+npm run dev       # development server
+npm run build     # production build
+```

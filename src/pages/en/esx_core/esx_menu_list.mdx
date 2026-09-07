@@ -1,3 +1,85 @@
 # esx_menu_list
-A advanced menu used to get inputs from the player.
+
+A basic table-based menu system used by `es_extended` to render a list of items.
 **Only available on clientside**
+
+### ESX.UI.Menu.Open
+
+Opens a list menu that the player can interact with.
+
+```lua
+ESX.UI.Menu.Open(type, namespace, name, data, onSelect, cancel)
+```
+
+**Arguments**
+
+- type: `string`
+  - the menu type to open, `list` in this case
+- namespace: `string`
+  - The namespace of the menu, usually `GetCurrentResourceName()` is used
+- name: `string`
+  - The name of the menu
+- data: `table`
+  - The table with the elements to show in the menu
+- onSelect: `function`
+  - Function that gets ran when an element is selected.
+- cancel: `function`
+  - Function that gets ran when the menu gets closed
+
+**Data table**
+
+- title: `string` - title of the menu
+- elements: `table` - the items to display in the list
+
+**Elements**
+
+- label: `string`
+  - label name to show
+- value: `any`
+  - value attached to the element
+- type: `string`
+  - element type
+
+### onSelect
+
+Function triggered when an element is submitted, returns `data` and `menu`.
+
+**Example**
+
+```lua
+function(data, menu)
+    print(data)
+    menu.close()
+end
+```
+
+### cancel
+
+Function triggered when the menu gets cancelled / closed, returns `data` and `menu`.
+
+**Example**
+
+```lua
+function(data, menu)
+    print("Menu closed")
+    menu.close()
+end
+```
+
+### Menu Example
+
+```lua
+ESX.UI.Menu.Open("list", GetCurrentResourceName(), "Example_List_Menu", {
+    title = "Example Menu",
+    elements = {
+        { label = "Option 1", value = 1 },
+        { label = "Option 2", value = 2 },
+    },
+}, function(data, menu)
+    print("Selected: ", data.value)
+    menu.close()
+end, function(data, menu)
+    print("Menu closed")
+    menu.close()
+end)
+```

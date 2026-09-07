@@ -21,3 +21,78 @@ A clean, modern HUD that's easy to customise and configure. Integrated mileage c
 - [es_extended](../esx_core/es_extended)
 - [esx_cruisecontrol](./esx_cruisecontrol) *(Optional, for seatbelt functionality)*
 
+## Exports
+
+### Client
+
+#### `HudToggle`
+
+Toggles the HUD on/off.
+
+```lua
+exports['esx_hud']:HudToggle(false) -- hide the HUD
+exports['esx_hud']:HudToggle(true)  -- show the HUD
+```
+
+#### `CruiseControlState`
+
+Sets the cruise control state (used by esx_cruisecontrol).
+
+```lua
+exports['esx_hud']:CruiseControlState(true)
+```
+
+#### `SeatbeltState`
+
+Sets the seatbelt state (used by esx_cruisecontrol).
+
+```lua
+exports['esx_hud']:SeatbeltState(true)
+```
+
+#### `GetCurrentMileage`
+
+Returns the current vehicle's mileage and unit.
+
+```lua
+local mileage, kmh = exports['esx_hud']:GetCurrentMileage()
+```
+
+For server-side mileage lookup, see [`esx_garage`](esx_garage), which uses `exports['esx_hud']:GetMileages(plates)`.
+
+### Server
+
+#### `GetMileage`
+
+Returns the mileage of a single plate.
+
+```lua
+local mileage = exports['esx_hud']:GetMileage(plate)
+```
+
+#### `GetMileages`
+
+Returns the mileage of multiple plates.
+
+```lua
+local mileages = exports['esx_hud']:GetMileages({ plate1, plate2 })
+```
+
+## Events
+
+### Server
+
+| Event | Parameters | Description |
+|---|---|---|
+| `esx_hud:EnteredVehicle` | `plate`, `kmh` | Fired by the client when entering a vehicle. |
+| `esx_hud:ExitedVehicle` | `plate`, `mileage`, `kmh` | Fired by the client when exiting a vehicle. |
+| `esx_hud:UpdateVehicleMileage` | `plate`, `mileage`, `kmh` | Updates the mileage of a vehicle. |
+
+### Client
+
+| Event | Parameters | Description |
+|---|---|---|
+| `esx_hud:HudToggle` | `state` | Toggles the HUD (same as the export). |
+| `esx_hud:UpdateMileage` | `mileage` | Updates the displayed mileage. |
+| `esx_hud:UnitChanged` | `state` | When the player switches between mph and kmh. |
+

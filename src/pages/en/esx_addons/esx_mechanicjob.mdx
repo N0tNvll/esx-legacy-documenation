@@ -1,9 +1,175 @@
-import {Callout} from "nextra/components";
+import { Callout } from 'nextra/components';
 
 # esx_mechanicjob
 
 [Github Link](https://github.com/esx-framework/ESX-Legacy-Addons/tree/main/%5Besx_addons%5D/esx_mechanicjob)
 
-<Callout type="warning">
-    The ESX Team is aware of major issues with this resource and are working on a complete rewrite.
+An ESX job resource that allows players to play as a mechanic - repairing, cleaning, hijacking, towing and impounding vehicles, harvesting/crafting repair items, running NPC tow-truck missions and managing a society stock.
+
+<Callout type="info">
+    This resource uses the modern `xLib` convention: `xLib.callback.registerCompat` / `xLib.callback` for RPC, `ESX.OpenContext` for menus and keybind driven interaction.
 </Callout>
+
+## Configuration
+
+- `Config.DrawDistance`
+    - type: `float`
+    - default: `10.0`
+    - description: The draw distance for the markers.
+- `Config.MaxInService`
+    - type: `integer`
+    - default: `-1`
+    - description: Max number of mechanics in service. `-1` disables the limit.
+- `Config.EnablePlayerManagement`
+    - type: `boolean`
+    - default: `true`
+    - description: Enables society management (billing, boss actions, contract restrictions).
+- `Config.EnableSocietyOwnedVehicles`
+    - type: `boolean`
+    - default: `false`
+    - description: When `true`, uses society-owned garage vehicles (via esx_society) instead of static vehicles.
+- `Config.NPCSpawnDistance`
+    - type: `float`
+    - default: `500.0`
+    - description: Distance from the towable zone at which the NPC target vehicle spawns.
+- `Config.NPCNextToDistance`
+    - type: `float`
+    - default: `25.0`
+    - description: Distance to trigger the "you are next to the towable" prompt.
+- `Config.NPCJobEarnings`
+    - type: `table`
+    - default: `{min = 15, max = 40}`
+    - description: Random society payout per NPC job. Doubled for grade 3+.
+- `Config.ActionVehicleDistance`
+    - type: `float`
+    - default: `2.0`
+    - description: Max distance to use a nearby vehicle for actions.
+- `Config.OxInventory`
+    - type: `boolean`
+    - default: `ESX.GetConfig().OxInventory`
+    - description: Enables ox_inventory stash usage for stock when `true`.
+- `Config.Vehicles`
+    - type: `table`
+    - default: `{'adder', 'asea', 'asterope', 'banshee', 'buffalo', 'sultan', 'baller3'}`
+    - description: NPC job spawnable towable vehicle models.
+- `Config.Zones`
+    - type: `table`
+    - description: All zone/marker definitions (MechanicActions, Garage, Craft, VehicleSpawnPoint, VehicleDeleter, VehicleDelivery, Towable1..40).
+
+### `Config.Zones` layout
+
+```lua
+Config.Zones = {
+    MechanicActions = {
+        Pos = vector3(-342.291, -133.370, 39.009),
+        Size = vector3(1.0, 1.0, 1.0),
+        Color = {r = 50, g = 200, b = 50},
+        Type = 21,
+    },
+    Garage = {
+        Pos = vector3(-97.5, 6496.1, 31.4),
+        Size = vector3(1.0, 1.0, 1.0),
+        Color = {r = 50, g = 200, b = 50},
+        Type = 21,
+    },
+    Craft = {
+        Pos = vector3(-323.140, -129.882, 38.999),
+        Size = vector3(1.0, 1.0, 1.0),
+        Color = {r = 50, g = 200, b = 50},
+        Type = 21,
+    },
+    VehicleSpawnPoint = {
+        Pos = vector3(-366.354, -110.766, 37.696),
+        Size = vector3(1.5, 1.5, 1.0),
+        Type = -1,
+    },
+    VehicleDeleter = {
+        Pos = vector3(-386.899, -105.675, 37.683),
+        Size = vector3(3.0, 3.0, 3.0),
+        Color = {r = 204, g = 204, b = 0},
+        Type = 1,
+    },
+    VehicleDelivery = {
+        Pos = vector3(-382.925, -133.748, 37.685),
+        Size = vector3(20.0, 20.0, 3.0),
+        Color = {r = 204, g = 204, b = 0},
+        Type = -1,
+    },
+    Towable1 = {
+        Pos = vector3(0.0, 0.0, 0.0),
+        Size = vector3(1.5, 1.5, 1.0),
+        Color = {r = 204, g = 204, b = 0},
+        Type = -1,
+    },
+}
+```
+
+> **Note:** `Config.Towables` is a list of coordinates that dynamically generate the `Towable1` through `Towable40` zones.
+
+## Keybinds / Commands
+
+- **F6** (`mechanicMenu`) - Opens the mobile mechanics menu (billing, hijack, repair, clean, impound, flatbed tow, place objects).
+- **F7** (`mechanicjob`) - Starts an NPC job (while driving a `flatbed`) or cancels an active job.
+- **E** - Interacts with markers/actions (menus, harvest, craft, delete vehicle).
+
+## Items & Usable Items
+
+The resource adds a crafting loop. These items are registered as usable (`ESX.RegisterUsableItem`):
+
+| Item | Used for | Removes |
+|---|---|---|
+| `blowpipe` | Hijack a vehicle (`esx_mechanicjob:onHijack` - 66% unlock success) | 1x blowpipe |
+| `fixkit` | Repair a vehicle (`esx_mechanicjob:onFixkit`) | 1x fixkit |
+| `carokit` | Bodywork repair (`esx_mechanicjob:onCarokit`) | 1x carokit |
+
+## Server Events
+
+| Event | Parameters | Description |
+|---|---|---|
+| `esx_mechanicjob:impoundOwnedVehicle` | `plate`, `vehicleNetId` | Impounds a vehicle via `exports['esx_garage']:impoundVehicle(plate)`. |
+| `esx_mechanicjob:startNPCJob` | - | Starts an NPC tow job (requires being in a flatbed). |
+| `esx_mechanicjob:stopNPCJob` | - | Stops the NPC job. |
+| `esx_mechanicjob:npcJobTargetSpawned` | `targetNetId` | Registers a spawned target vehicle. |
+| `esx_mechanicjob:npcJobTargetReached` | `targetNetId` | Marks a target vehicle as reached. |
+| `esx_mechanicjob:onNPCJobMissionCompleted` | `targetNetId`, `flatbedNetId` | Pays the society the NPC job earnings. |
+| `esx_mechanicjob:getStockItem` | `itemName`, `count` | Withdraws items from the `society_mechanic` inventory. |
+| `esx_mechanicjob:putStockItems` | `itemName`, `count` | Deposits items into the `society_mechanic` inventory. |
+| `esx_mechanicjob:startHarvest` / `stopHarvest` | - | Harvest `gazbottle` (Garage zone). |
+| `esx_mechanicjob:startHarvest2` / `stopHarvest2` | - | Harvest `fixtool`. |
+| `esx_mechanicjob:startHarvest3` / `stopHarvest3` | - | Harvest `carotool`. |
+| `esx_mechanicjob:startCraft` / `stopCraft` | - | Craft `blowpipe` from `gazbottle`. |
+| `esx_mechanicjob:startCraft2` / `stopCraft2` | - | Craft `fixkit` from `fixtool`. |
+| `esx_mechanicjob:startCraft3` / `stopCraft3` | - | Craft `carokit` from `carotool`. |
+
+## Callbacks
+
+| Callback | Parameters | Returns |
+|---|---|---|
+| `esx_mechanicjob:getStockItems` | - | Items array from the `society_mechanic` addon inventory. |
+| `esx_mechanicjob:getPlayerInventory` | - | `{items = items}` |
+
+## Database
+
+Import `esx_mechanicjob.sql`. It creates:
+
+- `addon_account` entry `society_mechanic` (shared).
+- `addon_inventory` entry `society_mechanic` (shared).
+- `datastore` entry `society_mechanic` (shared).
+- `jobs` entry `mechanic` with grades: `recrue`, `novice`, `experimente`, `chief`, `boss`.
+- `items`: `gazbottle`, `fixtool`, `carotool`, `blowpipe`, `fixkit`, `carokit`.
+
+There is also an `update_mechanic_uniforms.sql` to backfill the job grade skins.
+
+## Requirements
+
+- [es_extended](../esx_core/es_extended)
+- esx_society (player management)
+- esx_billing (player management)
+
+### Optional Integrations
+
+- esx_garage (impound)
+- esx_service (in-service limit)
+- esx_skin (uniforms)
+- esx_addoninventory / esx_addonaccount (society stock)
+- ox_inventory (when Config.OxInventory is `true`)

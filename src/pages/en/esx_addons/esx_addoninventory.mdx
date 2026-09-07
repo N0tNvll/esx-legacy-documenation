@@ -29,6 +29,8 @@ An addon inventory must be configured in the `database` before using it. you **m
 
 ### API
 
+> **Note:** All these functions are also available as server-side globals (`GetInventory`, `GetSharedInventory`, `AddInventory`, `AddSharedInventory`) since they are declared as global functions in the resource.
+
 #### getInventory
 
 - Event: `esx_addoninventory:getInventory`
@@ -40,6 +42,14 @@ An addon inventory must be configured in the `database` before using it. you **m
     end)
   ```
 
+- Global (server): `GetInventory`
+    - Usage: `GetInventory(name, owner)`
+    - Example:
+    ```lua
+    local inventory = GetInventory('property', 'steam:0123456789')
+    inventory.removeItem('water', 1)
+    ```
+
 #### getSharedInventory
 
 - Event: `esx_addoninventory:getSharedInventory`
@@ -50,3 +60,36 @@ An addon inventory must be configured in the `database` before using it. you **m
       inventory.addItem('bread', 1)
     end)
   ```
+
+- Export: `exports['esx_addoninventory']:GetSharedInventory`
+    - Usage: `exports['esx_addoninventory']:GetSharedInventory(name)`
+    - Example:
+    ```lua
+    local inventory = exports['esx_addoninventory']:GetSharedInventory('society_police')
+    inventory.addItem('bread', 1)
+    ```
+
+- Global (server): `GetSharedInventory`
+    - Usage: `GetSharedInventory(name)`
+
+#### addSharedInventory
+
+Adds a new shared inventory at runtime (inserts it into the database).
+
+- Export: `exports['esx_addoninventory']:AddSharedInventory`
+    - Usage: `exports['esx_addoninventory']:AddSharedInventory({name = 'society_police', label = 'Police'})`
+    - Parameters: `society` (table with `name` and `label`).
+    - Example:
+    ```lua
+    exports['esx_addoninventory']:AddSharedInventory({name = 'society_mechanic', label = 'Mechanic'})
+    ```
+
+### Server globals
+
+```lua
+GetInventory(name, owner)                 -- Returns an inventory belonging to a specific owner
+GetSharedInventory(name)                  -- Returns a shared inventory
+AddSharedInventory({name, label})         -- Creates a new shared inventory
+```
+
+> **Note:** When `ESX.GetConfig().OxInventory` is `true`, this resource uses `exports.ox_inventory:RegisterStash` instead of its own tables for shared inventories.

@@ -4,8 +4,137 @@ import { Callout } from 'nextra/components';
 
 [Github Link](https://github.com/esx-framework/ESX-Legacy-Addons/tree/main/%5Besx_addons%5D/esx_jobs)
 
-<Callout type="warning">
-  This resource is currently being completely rewrote. The new version will be available very soon.
+A simple job system for FiveM that provides basic civilian jobs. It allows players to get a job and work for money by collecting, processing and delivering goods, using a caution (security deposit) system for job vehicles.
+
+<Callout type="info">
+    This resource uses the modern `xLib` convention: `xLib.callback` / `ESX.OpenContext` and optional `izone` polygon zone support.
 </Callout>
 
-This resource is a simple job system for FiveM. It allows players to get a job and work for money.
+## Configuration
+
+- `Config.DrawDistance`
+    - type: `float`
+    - default: `10.0`
+    - description: The draw distance for the markers.
+- `Config.Locale`
+    - type: `string`
+    - default: `GetConvar('esx:locale', 'en')`
+    - description: The language locale.
+- `Config.Jobs`
+    - type: `table`
+    - description: Populated dynamically by the files in the `jobs/` directory.
+- `Config.MaxCaution`
+    - type: `integer`
+    - default: `10000`
+    - description: The maximum caution/security deposit allowed.
+- `Config.RequestIPL`
+    - type: `boolean`
+    - default: `true`
+    - description: Whether to load the IPLs for the slaughterer/tailor interiors.
+
+### `Config.PublicZones`
+
+Teleport zones for the San Andreas Times (reporter) building:
+
+```lua
+Config.PublicZones = {
+    EnterBuilding = {
+        Pos = vector3(-118.21, -607.14, 35.28),
+        Size = vector3(3.0, 3.0, 0.2),
+        Type = 'teleport',
+        Teleport = vector3(-139.09, -620.74, 167.82),
+        Marker = 1,
+        Color = {r = 50, g = 200, b = 50},
+        Blip = false,
+    },
+    ExitBuilding = {
+        Pos = vector3(-139.45, -617.32, 167.82),
+        Size = vector3(3.0, 3.0, 0.2),
+        Type = 'teleport',
+        Teleport = vector3(-113.07, -604.93, 35.28),
+        Marker = 1,
+        Color = {r = 50, g = 200, b = 50},
+        Blip = false,
+    },
+}
+```
+
+## Built-in Jobs
+
+| Job | Vehicles | Activity | Selling point |
+|---|---|---|---|
+| `fisherman` | Truck (`benson`), Boat (`tug`) | Catch fish | Sell fish - **$11** |
+| `fueler` | Truck (`phantom` + tanker) | Drill oil, refine, mix gas | Sell essence - **$61** |
+| `lumberjack` | Truck (`phantom` + trailer) | Cut wood, make planks | Sell planks - **$13** |
+| `miner` | Truck (`rubble`) | Mine stone, wash, smelt | Sell copper **$5** / iron **$9** / gold **$25** / diamond **$250** |
+| `slaughterer` | Truck (`benson`) | Catch, slaughter, package chickens | Sell packaged chicken - **$23** |
+| `tailor` | Truck (`youga2`) | Collect wool, make fabric, make clothes | Sell clothes - **$40** |
+
+> **Note:** The SQL also defines a `reporter` job whose zones are only covered by `Config.PublicZones` (building teleports).
+
+## Zone Types
+
+| Zone Type | Description |
+|---|---|
+| `cloakroom` | Change between work and citizen clothes (context menu, always active). |
+| `work` | Farm/craft an item (requires on-duty and on foot). |
+| `vehspawner` | Spawn a job vehicle (deducts caution deposit). |
+| `vehspawnpt` | The actual spawn coordinate for a vehicle (invisible, no interaction). |
+| `vehdelete` | Return/delete a job vehicle (returns a portion of the caution). |
+| `delivery` | Sell items for money. |
+
+### Item Table Structure
+
+```lua
+{
+    name = string,          -- display name (translated)
+    db_name = string,       -- database item name (nil for delivery)
+    time = number,          -- seconds between item processing ticks
+    max = number,           -- max inventory count before stopping
+    add = number,           -- quantity added per tick
+    remove = number,        -- quantity of required item consumed per tick
+    requires = string,      -- 'nothing' or the item db_name needed
+    requires_name = string, -- display name of the required item
+    drop = number,          -- percentage chance (0-100) to receive the item
+    price = number,         -- (delivery only) money paid per unit
+}
+```
+
+## Server Events
+
+| Event | Parameters | Description |
+|---|---|---|
+| `esx_jobs:startWork` | `zoneItem`, `zoneKey` | Starts a work session for a work/delivery zone. |
+| `esx_jobs:stopWork` | - | Stops the player's work session. |
+| `esx_jobs:caution` | `cautionType`, `cautionAmount`, `spawnPoint`, `vehicle` | `'take'` spawns a job vehicle and deducts the caution from bank; `'give_back'` refunds a portion based on the vehicle's health ratio. |
+
+## Client Events
+
+| Event | Parameters | Description |
+|---|---|---|
+| `esx_jobs:spawnJobVehicle` | `spawnPoint`, `vehicle` | Spawns the job vehicle with a `WORK###` plate and warps the player in. |
+| `esx:playerLoaded` | `xPlayer` | Sets loaded state and refreshes blips. |
+| `esx:setJob` | `job` | Updates job data and refreshes blips. |
+
+## iZONE Integration
+
+Any zone can use a `Zone = "zone_name"` field instead of `Pos` + radius-based detection. When set, `izone:getZoneCenter` and `izone:isPlayerInZone` are used for marker drawing and proximity checks.
+
+## Database
+
+Import `esx_jobs.sql`. It creates:
+
+- `addon_account` / `addon_account_data` entry `caution` (not shared).
+- `jobs` entries: `slaughterer`, `fisherman`, `miner`, `lumberjack`, `fueler`, `reporter`, `tailor` (each with a single `employee` grade).
+- 18 `items` used by the jobs (e.g. `fish`, `stone`, `wood`, `petrol`, `wool`, `clothe`, etc.).
+
+## Requirements
+
+- [es_extended](../esx_core/es_extended)
+- esx_addonaccount (caution accounts)
+- esx_skin (job uniforms)
+- esx_lib
+
+### Optional Integrations
+
+- izone (polygon zones)

@@ -29,7 +29,7 @@ Store Your vehicles in style! ESX garage has an amazing New UI to help you be st
         - `color`
             - type: rgba
             - description: The color of the marker.
-- `Config.Garges`
+- `Config.Garages`
     - type: table
     - description: The garages that will be drawn on the map.
     - layout:
@@ -79,4 +79,61 @@ Returns the `Config.Impounds` table.
 ```lua
 local impounds = exports['esx_garage']:getImpounds()
 ```
+
+### `registerGarage`
+
+Registers a new garage at runtime.
+
+```lua
+exports['esx_garage']:registerGarage({
+    id = 'my_garage',
+    label = 'My Garage',
+    type = 'public',
+    entryPoint = vec3(-285.2, -886.5, 31.0),
+    storePoint = vec3(-298.8, -889.7, 31.0),
+    spawns = {
+        vec4(-309.3, -897.0, 31.0, 351.8),
+    },
+    blip = { sprite = 357, scale = 0.8, color = 3 },
+    ped = { model = `s_m_m_gentransport`, z = 30.73, heading = 72.7597 },
+    pound = 'los_santos',
+})
+```
+
+### `registerGarages`
+
+Registers a list of garages at runtime.
+
+```lua
+exports['esx_garage']:registerGarages({ garage1, garage2 })
+```
+
+### `unregisterGarage`
+
+Removes a registered garage by id.
+
+```lua
+exports['esx_garage']:unregisterGarage('my_garage')
+```
+
+### `impoundVehicle`
+
+Impounds a vehicle by plate (used by [esx_policejob](esx_policejob) and [esx_mechanicjob](esx_mechanicjob)).
+
+```lua
+exports['esx_garage']:impoundVehicle(plate)
+```
+
+## Callbacks
+
+| Callback | Returns |
+|---|---|
+| `esx_garage:getGarages` | The list of garages and impounds. |
+| `esx_garage:getVehicles` | The player's vehicles. |
+| `esx_garage:retrieveVehicle` | Vehicle data for retrieving. |
+| `esx_garage:storeVehicle` | Result of storing a vehicle. |
+| `esx_garage:toggleFavorite` | Result of toggling a favorite. |
+| `esx_garage:renameVehicle` | Result of renaming a vehicle. |
+| `esx_garage:transferVehicle` | Result of transferring a vehicle. |
+| `esx_garage:giveKeys` | Result of giving vehicle keys. |
 

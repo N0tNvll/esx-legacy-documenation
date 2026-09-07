@@ -1,0 +1,62 @@
+# cron
+
+A simple but vital resource allowing other resources to run tasks at specific daily times (hour:minute), with optional weekday gating. Ticks once per minute.
+
+## Usage
+
+### `RunAt` (global)
+
+Schedules a callback to run daily at the given hour and minute.
+
+```lua
+RunAt(h, m, cb)
+```
+
+**Parameters**
+
+- `h` (number): hour (0-23).
+- `m` (number): minute (0-59).
+- `cb` (function): `function(d, h, m)` - receives the weekday (`d`, 1 = Sunday), hour and minute of the scheduled run.
+
+**Example**
+
+```lua
+RunAt(12, 0, function(d, h, m)
+    print('Midday job done')
+end)
+```
+
+### `cron:runAt` (event)
+
+Runtime schedule. Validates `h`, `m` numbers and `cb` being a function/callable table.
+
+```lua
+function CronTask(d, h, m)
+    print('Task done')
+end
+
+TriggerEvent('cron:runAt', 5, 10, CronTask)
+```
+
+### Weekday gating
+
+The callback receives the weekday so you can run tasks only on specific days:
+
+```lua
+-- Run every Monday at 18:30 (wday 1 = Sunday, so 2 = Monday)
+function CronTask(d, h, m)
+    if d == 2 then
+        print('Task done')
+    end
+end
+
+TriggerEvent('cron:runAt', 18, 30, CronTask)
+```
+
+### `GetUnixTimestamp`
+
+Returns the current `os.time()`.
+
+```lua
+local timestamp = GetUnixTimestamp()
+```

@@ -1,0 +1,39 @@
+# esx_chat_theme
+
+A purely **styling-only** resource that provides an ESX-branded theme for the stand-alone `chat` resource. It contains no Lua at all - everything is declared via the `chat_theme` manifest block plus a CSS stylesheet and a small JavaScript file.
+
+## Theme
+
+Registers a single chat theme named **`esx`**:
+
+```lua
+chat_theme 'esx' {
+    styleSheet = 'style.css',
+    script = 'shadow.js',
+    msgTemplates = {
+        default = '<b>{0}</b><span>{1}</span>',
+    },
+}
+```
+
+To use it with the chat resource, enable the theme in your `server.cfg`:
+
+```
+setr chat_theme esx
+```
+
+or reference it from the chat resource's manifest.
+
+## Features
+
+- ESX-orange accents (`#fb9b04`) on the chat input borders and prefix brackets.
+- Sender name in condensed `Font2_cond` style.
+- Drop-shadow/glow effect via an inline SVG filter (`shadow.js`).
+
+## Events / Exports
+
+None. It is a passive, presentational resource for the chat UI.
+
+## Requirements
+
+- The stand-alone `chat` resource.
