@@ -1,0 +1,82 @@
+# Exports
+
+Most resources should access `esx_lib` through `xLib` modules. Direct exports are used for shared registries and cross-resource integration where each resource has its own Lua VM.
+
+## Callback registry
+
+| Export | Side | Description |
+|---|---|---|
+| `setValidCallback(callbackName, isValid)` | shared | Registers or unregisters a callback name for the invoking resource. |
+| `isCallbackValid(callbackName)` | shared | Returns whether a callback name is currently registered. |
+
+These exports are used by `xLib.callback.register` and `xLib.callback.registerCompat`. They prevent callback ownership collisions and allow unknown callback calls to be rejected.
+
+## Pub/Sub registry
+
+| Export | Side | Description |
+|---|---|---|
+| `pubsub_subscribe(src, topic)` | server | Subscribes a live player to a topic. |
+| `pubsub_unsubscribe(src, topic)` | server | Removes a player from a topic. |
+| `pubsub_publish(topic, data)` | server | Sends trusted server data to all subscribed players. |
+| `pubsub_subscribers(topic)` | server | Returns a fresh list of subscribed server IDs. |
+| `pubsub_isSubscribed(src, topic)` | server | Checks whether a player is subscribed. |
+| `pubsub_clear(topic)` | server | Removes all subscribers from a topic. |
+
+```lua
+exports.esx_lib:pubsub_subscribe(source, 'esx_shops:247:stock')
+exports.esx_lib:pubsub_publish('esx_shops:247:stock', { qty = 5 })
+```
+
+Prefer `xLib.pubsub.*` in scripts that already import `@esx_lib/imports.lua`.
+
+## Client event batching
+
+| Export | Side | Description |
+|---|---|---|
+| `triggerClientEvent(eventName, targets, ...)` | server | Triggers an event for one target or an array of targets. Arrays are msgpack-packed once before being sent to every target. |
+
+```lua
+exports.esx_lib:triggerClientEvent('inventory:update', { 1, 2, 3 }, payload)
+```
+
+## Medal.tv
+
+| Export | Side | Description |
+|---|---|---|
+| `getMedalConfig()` | client | Returns `Config.Medal`. |
+| `triggerMedalClip(publicKey, eventName, clipOptions)` | client | Sends a Medal NUI message to save a clip. |
+
+```lua
+local config = exports.esx_lib:getMedalConfig()
+exports.esx_lib:triggerMedalClip(config.publicKey, config.eventName, config.clipOptions)
+```
+
+The config currently contains:
+
+- `enabled`
+- `publicKey`
+- `eventName`
+- `clipOptions.duration`
+- `clipOptions.captureDelayMs`
+- `clipOptions.alertType`
+
+## Version server info
+
+`esx_lib` also publishes version metadata to server info convars for ESX resources.
+
+On startup and on resource start, it checks resources whose names start with `esx_` or `es_`, or resources that depend on `es_extended` or `esx_lib`. If a resource has `version` and/or `legacyversion` metadata, it sets:
+
+```text
+<resourceName>-version
+```
+
+If both metadata keys exist, the value is JSON:
+
+```json
+{
+  "legacyVersion": "1.15.0",
+  "version": "0.01"
+}
+```
+
+If only one key exists, the value is that single version string.

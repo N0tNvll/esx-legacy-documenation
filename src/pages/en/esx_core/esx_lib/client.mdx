@@ -1,0 +1,328 @@
+# Client
+
+Client modules are lazy-loaded through `xLib` after adding `@esx_lib/imports.lua` to the resource manifest.
+
+## Keybinds
+
+`xLib.addKeybind(data)` registers a FiveM command pair and key mapping.
+
+```lua
+local keybind = xLib.addKeybind({
+    name = 'showinv',
+    description = 'Open Inventory',
+    defaultMapper = 'keyboard',
+    defaultKey = 'F2',
+    onPressed = function(self)
+        OpenInventory()
+    end,
+    onReleased = function(self)
+        print(self.currentKey)
+    end,
+})
+
+keybind:disable(true)
+keybind:remove()
+```
+
+Returned keybinds expose `currentKey`, `disabled`, `isPressed`, `getCurrentKey()`, `isControlPressed()`, `disable(toggle)` and `remove()`.
+
+## Blips
+
+`xLib.blips` creates and removes map blips. Current addons use it for shop, job and admin map markers.
+
+```lua
+local blip = xLib.blips.create({
+    coords = vector3(-815.0, -184.0, 37.6),
+    sprite = 71,
+    display = 4,
+    scale = 0.8,
+    color = 47,
+    shortRange = true,
+    label = 'Barber Shop',
+})
+
+xLib.blips.remove(blip)
+```
+
+`xLib.blips.create(data)` accepts `coords`, `entity`, `radius`, `sprite`, `display`, `scale`, `color`, `alpha`, `highDetail`, `shortRange`, `friendly`, `flashes`, `headingIndicator`, `rotation`, `category`, `label`/`name`, `playerName`, `route` and `routeColor`.
+
+`xLib.blips.createMany(items, defaults)` creates a list of blips by merging each item with shared defaults.
+
+## Cache
+
+`xLib.cache` is a live client-side player state table.
+
+Available values:
+
+- `playerId`
+- `serverId`
+- `ped`
+- `coords`
+- `vehicle`
+- `seat`
+- `weapon`
+
+`coords` and `serverId` are resolved lazily. Changes to tracked values emit `xLib:cache:<key>` with `(value, previous)`.
+
+```lua
+AddEventHandler('xLib:cache:vehicle', function(vehicle, previous)
+    print(vehicle, previous)
+end)
+```
+
+## NUI
+
+`xLib.nui` wraps common NUI messaging and callback patterns. It is used by resources such as `esx_inventory` and `esx_adminmenu`.
+
+```lua
+xLib.nui.open({ action = 'openInventory' }, true, true)
+xLib.nui.send('setPlayerData', ESX.PlayerData)
+xLib.nui.focus(false, false, false)
+xLib.nui.close({ action = 'close' })
+```
+
+Methods:
+
+- `send(message, data?)`
+- `focus(hasFocus, hasCursor?, keepInput?)`
+- `open(message?, focus?, cursor?, keepInput?)`
+- `close(message?)`
+- `ok(data?)`
+- `fail(errorMessage, code?)`
+- `register(name, handler)`
+
+`register` supports immediate responses, explicit `reply(...)`, or deferred replies by returning `xLib.nui.defer`.
+
+```lua
+xLib.nui.register('saveSlots', function(data, reply)
+    SaveSlots(data)
+    reply(xLib.nui.ok())
+    return xLib.nui.defer
+end)
+```
+
+## Marker zones and points
+
+`xLib.markerZone.create(data)` combines point detection with optional marker drawing. It is used by shop-style addons for draw distance and interaction distance handling.
+
+```lua
+local zone = xLib.markerZone.create({
+    coords = vector3(425.1, -979.5, 30.7),
+    drawDistance = 10.0,
+    interactDistance = 1.5,
+    marker = {
+        type = 1,
+        size = vector3(1.5, 1.5, 1.0),
+        color = { r = 50, g = 200, b = 120, a = 120 },
+    },
+    onEnter = function()
+        ESX.TextUI('[E] Open')
+    end,
+    onExit = function()
+        ESX.HideUI()
+    end,
+    onInside = function(distance)
+        if IsControlJustReleased(0, 38) then
+            OpenMenu()
+        end
+    end,
+})
+
+zone.hide()
+zone.show()
+zone.remove()
+```
+
+Options include `coords`, `distance`, `drawDistance`, `interactDistance`, `exitDistance`, `marker`, `hidden`, `canDraw`, `canInteract`, `onEnterPoint`, `onExitPoint`, `onEnter`, `onExit` and `onInside`.
+
+Lower-level proximity helpers are also available:
+
+- `xLib.points.create(coords, distance, hidden, enter, leave, inside)`
+- `xLib.points.remove(handle)`
+- `xLib.points.hide(handle, hidden)`
+- `xLib.points.startLoop()`
+- `xLib.point:new({ coords, distance, hidden, enter, leave, inside })`
+- `point:delete()`
+- `point:toggle(hidden?)`
+
+## Game and entity helpers
+
+`xLib.game` mirrors ESX client game helpers:
+
+- `getPedMugshot(ped, transparent?)`
+- `spawnObject(object, coords, cb, networked?)`
+- `spawnLocalObject(object, coords, cb)`
+- `deleteVehicle(vehicle)`
+- `deleteObject(object)`
+- `spawnVehicle(vehicleModel, coords, heading, cb, networked?)`
+- `spawnLocalVehicle(vehicle, coords, heading, cb)`
+- `isVehicleEmpty(vehicle)`
+- `getObjects()`
+- `getPeds(onlyOtherPeds?)`
+- `getVehicles()`
+- `getPlayers(onlyOtherPlayers?, returnKeyValue?, returnPeds?)`
+- `getClosestObject(coords?, modelFilter?)`
+- `getClosestPed(coords?, modelFilter?)`
+- `getClosestPlayer(coords?)`
+- `getClosestVehicle(coords?, modelFilter?)`
+- `getPlayersInArea(coords?, maxDistance)`
+- `getVehiclesInArea(coords?, maxDistance)`
+- `isSpawnPointClear(coords, maxDistance)`
+- `getVehicleInDirection()`
+- `getVehicleProperties(vehicle)`
+- `setVehicleProperties(vehicle, props)`
+
+`xLib.entity` provides lower-level helpers:
+
+- `closest(entities, isPlayerEntities, coords?, modelFilter?)`
+- `EnumerateWithinDistance(entities, isPlayerEntities, coords?, maxDistance)`
+- `Teleport(entity, coords, cb?)`
+
+## Interactions
+
+`xLib.interactions` registers simple interaction handlers behind a shared interact key.
+
+```lua
+xLib.interactions.register('garage', function()
+    OpenGarage()
+end, function()
+    return CanOpenGarage()
+end)
+
+xLib.interactions.remove('garage')
+```
+
+Methods:
+
+- `register(name, onPress, condition?)`
+- `remove(name)`
+- `getInteractKey()`
+
+## Callbacks
+
+Client callbacks can call the server and can also register handlers for server-to-client requests.
+
+```lua
+xLib.callback('esx_billing:getBills', false, function(bills)
+    OpenBillingMenu(bills)
+end)
+
+local bills = xLib.callback.await('esx_billing:getBills', false)
+```
+
+Registration methods:
+
+- `xLib.callback.register(name, cb)` uses the modern handler signature.
+- `xLib.callback.registerCompat(name, cb, owner?)` uses the old ESX client callback signature `function(cb, ...)`.
+
+The second argument to client calls is a delay in milliseconds, or `false` to disable throttling for that event.
+
+## Pub/Sub
+
+Client pub/sub only listens. Players must be subscribed server-side before they receive topic data.
+
+```lua
+local function onStock(data, topic)
+    print(topic, data.qty)
+end
+
+xLib.pubsub.on('esx_shops:247:stock', onStock)
+xLib.pubsub.off('esx_shops:247:stock', onStock)
+```
+
+Methods:
+
+- `on(topic, handler)`
+- `off(topic, handler?)`
+
+## Raycast
+
+The lazy module is loaded through `xLib.raycast`, and the returned table is also assigned to `xLib.Raycast`.
+
+```lua
+local Raycast = xLib.raycast
+
+local target, hit, coords, normal, material, entity = Raycast.FromScreen(10.0, 5, PlayerPedId())
+local ray = Raycast.Start(10.0, 5, PlayerPedId())
+
+if ray:IsActive() then
+    ray:Stop()
+end
+```
+
+Methods:
+
+- `GetShapeTestResult(shape)`
+- `FromScreen(depth, ...)`
+- `Start(depth, ...)`
+- `ray:Stop()`
+- `ray:IsActive()`
+
+## DUI
+
+`xLib.dui` is a class wrapper for DUI handles.
+
+```lua
+local dui = xLib.dui:new({
+    url = 'https://example.com',
+    width = 1024,
+    height = 768,
+})
+
+dui:sendMessage({ action = 'refresh' })
+dui:setUrl('https://example.com/next')
+dui:remove()
+```
+
+Methods:
+
+- `:remove()`
+- `:setUrl(url)`
+- `:sendMessage(message)`
+- `:sendMouseMove(x, y)`
+- `:sendMouseDown(button)`
+- `:sendMouseUp(button)`
+- `:sendMouseWheel(deltaX, deltaY)`
+
+## Streaming
+
+`xLib.streaming` requests game assets with a timeout controlled by `xLib:streamingTimeout` (default `10000`).
+
+Methods:
+
+- `requestModel(modelHash, cb)`
+- `requestModelWithSpinner(modelHash, message, cb)`
+- `requestStreamedTextureDict(textureDict, cb)`
+- `requestNamedPtfxAsset(assetName, cb)`
+- `requestAnimSet(animSet, cb)`
+- `requestAnimDict(animDict, cb)`
+- `requestWeaponAsset(weaponHash, cb)`
+- `requestAudioBank(bankName, cb)`
+
+## Scaleforms
+
+`xLib.scaleform` provides common scaleform displays:
+
+- `showFreemodeMessage(title, msg, sec)`
+- `showBreakingNews(title, msg, bottom, sec)`
+- `showPopupWarning(title, msg, bottom, sec)`
+- `showTrafficMovie(sec)`
+- `utils.requestScaleformMovie(movie)`
+- `utils.runMethod(scaleform, methodName, returnValue, ...)`
+
+## Medal
+
+`xLib.medal` wraps the Medal.tv client export.
+
+```lua
+xLib.medal.triggerClip(nil, nil, {
+    duration = 30,
+    captureDelayMs = 0,
+    alertType = 'Default',
+})
+```
+
+Methods:
+
+- `getConfig()`
+- `triggerClip(publicKey?, eventName?, clipOptions?)`

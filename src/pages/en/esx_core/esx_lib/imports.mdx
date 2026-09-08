@@ -1,0 +1,82 @@
+# Imports
+
+Any resource that lists `@esx_lib/imports.lua` in `shared_scripts` receives the `xLib` namespace and an overridden `require` that points to `xLib.require`.
+
+```lua
+shared_scripts {
+    '@esx_lib/imports.lua',
+    '@es_extended/imports.lua',
+}
+```
+
+## Lazy loading
+
+`xLib` uses `__index` and `__call` metamethods. On first access to `xLib.<module>`, the loader checks `imports/<module>/<side>.lua` for the current runtime and prepends `imports/<module>/shared.lua` when it exists.
+
+The loaded module is cached in the importing resource VM, so repeated access does not reload the file.
+
+```lua
+local nui = xLib.nui
+xLib.nui.send({ action = 'ready' })
+```
+
+## Export fallback
+
+If no lazy-loaded module exists for a key, the import proxy falls back to the `esx_lib` export with the same name:
+
+```lua
+xLib.pubsub_publish('esx_shops:247:stock', { qty = 5 })
+```
+
+That fallback is mainly useful for internals and shared registries. Application code should prefer the named modules, such as `xLib.pubsub.publish(...)`, where they exist.
+
+## Available modules
+
+Client modules:
+
+- `addKeybind`
+- `blips`
+- `cache`
+- `callback`
+- `colors`
+- `dui`
+- `entity`
+- `game`
+- `interactions`
+- `markerZone`
+- `medal`
+- `nui`
+- `point`
+- `points`
+- `pubsub`
+- `raycast`
+- `scaleform`
+- `streaming`
+
+Server modules:
+
+- `callback`
+- `colors`
+- `onesync`
+- `player`
+- `pubsub`
+- `rateLimiter`
+- `server`
+- `token`
+- `validation`
+
+Shared modules:
+
+- `class`
+- `colors`
+- `isEnhanced`
+- `math`
+- `overload`
+- `require`
+- `string`
+- `table`
+- `timeout`
+- `validation`
+- `vehiclePlate`
+- `verify`
+- `waitFor`

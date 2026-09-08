@@ -1,0 +1,229 @@
+# Shared
+
+Shared modules can run on both client and server. Server-only additions are noted where applicable.
+
+## Require and load
+
+`xLib.require` loads Lua modules by name and supports cross-resource paths.
+
+```lua
+local ScoreboardModule = xLib.require '@esx_scoreboard.server.module.main'
+```
+
+Methods:
+
+- `xLib.require(name)`
+- `xLib.load(file_path, env?)`
+- `xLib.loadJson(file_path)`
+
+The module loader also configures `package.searchpath`, `package.searchers` and `package.loaded` for resources imported through `esx_lib`.
+
+## Validation
+
+`xLib.validation` sanitizes common input types and returns `nil` when the value is invalid.
+
+```lua
+local count = xLib.validation.count(data.count, 100)
+local account = xLib.validation.string(data.account, {
+    minLength = 3,
+    maxLength = 32,
+    pattern = '^[%w_]+$',
+})
+```
+
+Methods:
+
+- `number(value, min?, max?, round?)`
+- `integer(value, min?, max?, mode?)`
+- `count(value, max?)`
+- `money(value, min?, max?)`
+- `string(value, options?)`
+- `oneOf(value, values)`
+
+`string` options include `trim`, `allowEmpty`, `minLength`, `maxLength` and `pattern`.
+
+Server adds player validation helpers documented in [Server](./server).
+
+## Verify
+
+`xLib.verify(value, valid_types, throw_error?)` validates runtime types and optional ESX/FiveM-specific types.
+
+Supported custom types include:
+
+- `array`
+- `int`
+- `uint`
+- `float`
+- `char`
+- `ped`
+- `vehicle`
+- `prop`
+- `playerId`
+- `class`
+- `model`
+
+```lua
+xLib.verify(source, 'playerId', true)
+xLib.verify(coords, { 'table', 'vector3' }, true)
+```
+
+`xLib.verify.debug` enables debug behavior for validation failures.
+
+## Vehicle plates
+
+`xLib.vehiclePlate` centralizes plate normalization, comparison and generation. It is used by vehicle-related addons before database lookups or ownership checks.
+
+```lua
+local plate = xLib.vehiclePlate.normalize(input, {
+    compact = true,
+    uppercase = true,
+    maxLength = 8,
+})
+
+local generated = xLib.vehiclePlate.generateUnique({
+    letters = 3,
+    numbers = 3,
+    useSpace = true,
+}, function(candidate)
+    return MySQL.scalar.await('SELECT 1 FROM owned_vehicles WHERE plate = ?', { candidate }) ~= nil
+end)
+```
+
+Methods:
+
+- `normalize(plate, options?)`
+- `randomLetters(length)`
+- `randomNumbers(length)`
+- `generate(options?)`
+- `generateUnique(options?, exists?)`
+- `equals(left, right, options?)`
+- `matchesVehicle(vehicle, plate, options?)`
+
+Normalize options include `maxLength`, `uppercase`, `compact`, `allowEmpty`, `pattern` and `coerce`. Generate options also include `prefix`, `suffix`, `letters`, `numbers`, `letterCount`, `numberCount`, `useSpace` and `attempts`.
+
+## Math
+
+`xLib.math` extends common numeric utilities.
+
+Methods:
+
+- `clamp(value, min, max)`
+- `toNumber(value, min?, max?, round?)`
+- `tryNumber(value, min?, max?, round?)`
+- `toInteger(value, min?, max?)`
+- `toScalars(input, min?, max?, round?)`
+- `toVector(input, min?, max?, round?)`
+- `normalToRotation(normal)`
+- `toRGBA(input)`
+- `hexToRGBA(hex)`
+- `toHex(r, g, b, a?)`
+- `groupDigits(number, separator?)`
+- `round(num, decimalPlaces?)`
+- `interpolate(start, goal, percent)`
+- `lerp(a, b, t)`
+- `inverseLerp(a, b, value)`
+- `remap(value, inMin, inMax, outMin, outMax)`
+- `Round(value, numDecimalPlaces?)`
+- `GroupDigits(value)`
+- `Trim(value)`
+- `Random(minRange?, maxRange?)`
+- `GetHeadingFromCoords(origin, target)`
+
+## Strings
+
+`xLib.string` provides common formatting and safe matching helpers.
+
+Methods:
+
+- `normalize(s)`
+- `capitalize(s)`
+- `toSnake(s)`
+- `toCamel(s)`
+- `toPascal(s)`
+- `escapePattern(s)`
+- `matchSafe(s, pattern)`
+- `before(s, pattern)`
+- `after(s, pattern)`
+- `contains(s, substr)`
+- `replace(s, old, new)`
+- `randomHex(length)`
+- `uuid()`
+
+## Tables
+
+`xLib.table` extends Lua table helpers.
+
+Methods:
+
+- `isArray(tbl)`
+- `searchForKey(tbl, item)`
+- `filter(tbl, filter)`
+- `deepcopy(tbl, copies?)`
+- `merge(t1, t2, addDuplicateNumbers?)`
+- `dump(tbl)`
+- `sizeOf(t)`
+- `set(t)`
+- `indexOf(t, value)`
+- `lastIndexOf(t, value)`
+- `find(t, cb)`
+- `findIndex(t, cb)`
+- `map(t, cb)`
+- `reverse(t)`
+- `clone(t)`
+- `concat(t1, t2)`
+- `join(t, sep?)`
+- `contains(tab, val)`
+- `sort(t, order?)`
+- `toArray(t)`
+- `wipe(t)`
+
+## Classes
+
+`xLib.class(copy?)` creates a simple class table with `:new(...)` support. Classes can define `constructor(...)`.
+
+```lua
+local Account = xLib.class()
+
+function Account:constructor(name)
+    self.name = name
+end
+
+local account = Account:new('society_police')
+```
+
+## Colors
+
+`xLib.colors` reads ESX theme convars and exposes a reusable palette:
+
+- `brand`
+- `darkest`
+- `dark`
+- `mid`
+- `light`
+- `lightest`
+- `getESXTheme(defaults?)`
+
+Convars include `esx:brand-color`, `esx:darkest-color`, `esx:dark-color`, `esx:mid-color`, `esx:light-color`, `esx:lightest-color`, `esx:ui:primaryColor`, `esx:ui:secondaryColor`, `esx:ui:backgroundColor`, `esx:ui:accentColor` and `esx:ui:logoUrl`.
+
+## Timeout
+
+`xLib.timeout` provides cancellable timeouts.
+
+```lua
+local id = xLib.timeout.setTimeout(1000, function()
+    print('done')
+end)
+
+xLib.timeout.clearTimeout(id)
+```
+
+Methods:
+
+- `setTimeout(msec, cb)`
+- `clearTimeout(id)`
+
+## Other utilities
+
+- `xLib.isEnhanced` returns whether the game is GTA5 Enhanced Edition.
+- `xLib.overload(name, valid_types, cb, obj?)` dispatches by argument types.
+- `xLib.waitFor(cb, errMessage?, timeout?, interval?)` yields until the callback returns a non-nil value.

@@ -1,0 +1,177 @@
+# Server
+
+Server modules are available through `xLib` after importing `@esx_lib/imports.lua`.
+
+## Callbacks
+
+Server callbacks can request data from clients or register handlers for client requests.
+
+```lua
+xLib.callback.registerCompat('esx_billing:getBills', function(source, cb)
+    cb(GetBills(source))
+end)
+
+xLib.callback('esx-adminmenu:client:adminCarVehicleProps', source, function(props)
+    SaveVehicle(source, props)
+end)
+
+local props = xLib.callback.await('esx-adminmenu:client:adminCarVehicleProps', source)
+```
+
+Methods:
+
+- `xLib.callback(event, playerId, cb, ...)`
+- `xLib.callback.await(event, playerId, ...)`
+- `xLib.callback.register(name, cb)`
+- `xLib.callback.registerCompat(name, cb, owner?)`
+
+`registerCompat` uses the old ESX server callback signature `function(source, cb, ...)`. Registered callback names are validated through the shared callback registry so unknown callbacks are rejected instead of silently hanging.
+
+Callback convars:
+
+- `xLib:callbackTimeout` defaults to `300000`.
+- `xLib:callbackValidationGrace` defaults to `15000`.
+- `xLib:callbackValidationWindow` defaults to `5000`.
+- `xLib:callbackValidationMaxRequests` defaults to `30`.
+
+## Player helpers
+
+`xLib.player` validates server IDs and checks proximity using the player's current ped coordinates. Addons such as billing, boat and mechanic use these helpers before accepting target actions.
+
+```lua
+local nearby, actualDistance = xLib.player.isNearPlayer(source, target, 10.0)
+if not nearby then
+    return
+end
+```
+
+Methods:
+
+- `getPed(source)`
+- `getCoords(source)`
+- `distanceToCoords(source, coords)`
+- `isNearCoords(source, coords, distance)`
+- `distanceToPlayer(source, target)`
+- `isNearPlayer(source, target, distance)`
+- `findNearbyCoords(source, coordsList, distance)`
+- `isNearAnyCoords(source, coordsList, distance)`
+
+`xLib.server` exposes compatibility aliases:
+
+- `getPlayerCoords(source)`
+- `distanceToCoords(source, coords)`
+- `isPlayerNearCoords(source, coords, distance)`
+- `distanceToPlayer(source, target)`
+- `isPlayerNearPlayer(source, target, distance)`
+- `isPlayerNearAnyCoords(source, coordsList, distance)`
+
+## Validation
+
+On the server, `xLib.validation` includes shared sanitizers plus player validation helpers.
+
+```lua
+local amount = xLib.validation.money(inputAmount, 0, 50000)
+local nearShop = xLib.validation.playerNearCoords(source, Config.Shop, 5.0)
+```
+
+Server-only methods:
+
+- `player(source)`
+- `playerNearCoords(source, coords, distance)`
+- `playerNearPlayer(source, target, distance)`
+
+Shared validation methods are documented in [Shared](./shared).
+
+## OneSync
+
+`xLib.onesync` searches server-side entities and players. Entity helpers return network IDs.
+
+Methods:
+
+- `getPlayersInArea(source, maxDistance, ignore?, routingBucket?)`
+- `getClosestPlayer(source, maxDistance, ignore?, routingBucket?)`
+- `getPedsInArea(coords, maxDistance, modelFilter?)`
+- `getObjectsInArea(coords, maxDistance, modelFilter?)`
+- `getVehiclesInArea(coords, maxDistance, modelFilter?)`
+- `getClosestPed(coords, modelFilter?)`
+- `getClosestObject(coords, modelFilter?)`
+- `getClosestVehicle(coords, modelFilter?)`
+
+## Pub/Sub
+
+Server pub/sub manages subscriptions and publishes trusted server data to subscribed clients.
+
+```lua
+xLib.pubsub.subscribe(source, 'esx_shops:247:stock')
+xLib.pubsub.publish('esx_shops:247:stock', { qty = 5 })
+xLib.pubsub.unsubscribe(source, 'esx_shops:247:stock')
+```
+
+Methods:
+
+- `subscribe(src, topic)`
+- `unsubscribe(src, topic)`
+- `publish(topic, data)`
+- `subscribers(topic)`
+- `isSubscribed(src, topic)`
+- `clear(topic)`
+
+Topics must be non-empty strings up to 200 characters and may contain letters, numbers, `_`, `:`, `.` and `-`. Namespace topics by resource, for example `esx_shops:247:stock`.
+
+## Rate limiter
+
+`xLib.rateLimiter(options)` creates a token-bucket limiter.
+
+```lua
+local limiter = xLib.rateLimiter({
+    capacity = 5,
+    refill = 5,
+    interval = 1000,
+})
+
+local allowed, retryAfter = limiter:consume(source)
+```
+
+Options:
+
+- `capacity`
+- `refill`
+- `interval`
+- `maxEntries`
+- `staleMs`
+- `pruneInterval`
+
+Methods:
+
+- `consume(key, cost?)`
+- `retryAfter(key, cost?)`
+- `reset(key)`
+- `clear()`
+- `size()`
+
+`xLib:rateLimiterMaxEntries` controls the default maximum entries and defaults to `4096`.
+
+## Tokens
+
+`xLib.token` creates single-use, expiring tokens. Tokens can be bound to a player source.
+
+```lua
+local token = xLib.token.create({
+    source = source,
+    ttl = 30000,
+    data = { action = 'payBill', billId = billId },
+})
+
+local data = xLib.token.consume(token, source)
+```
+
+Methods:
+
+- `create({ ttl, source?, data? })`
+- `consume(id, source?)`
+- `remove(id)`
+- `reset(source)`
+- `clear()`
+- `size()`
+
+`xLib:tokenMaxEntries` controls the maximum token registry size and defaults to `4096`.

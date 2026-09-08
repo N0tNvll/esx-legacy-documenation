@@ -102,6 +102,7 @@ shared_scripts {
 }
 
 dependencies {
+  'esx_lib', -- Ensure xLib is available before this script starts.
   'es_extended' -- Ensure the script starts after es_extended so that the functions work.
 }
 ```
@@ -121,7 +122,7 @@ end)
 
 **Client (`client.lua`):**
 ```lua
-xLib.callback('myScript:getMeme', function(meme)
+xLib.callback('myScript:getMeme', false, function(meme)
   print(meme)
 end)
 ```

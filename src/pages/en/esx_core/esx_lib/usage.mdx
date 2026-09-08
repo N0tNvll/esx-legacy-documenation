@@ -1,0 +1,84 @@
+# Usage in ESX
+
+The current `esx_core` and `ESX-Legacy-Addons` scripts use `esx_lib` as the shared utility layer for modern callbacks, UI helpers, proximity validation and common client interactions.
+
+## Core resources
+
+Core resources import `@esx_lib/imports.lua` in their manifests where they need shared helpers. Current usage includes:
+
+- `es_extended` imports `esx_lib` and depends on it.
+- `esx_inventory` uses `xLib.addKeybind` and `xLib.nui` for inventory keybinds and NUI callbacks.
+- `esx_skin`, `esx_multicharacter`, `esx_menu_default`, `esx_menu_dialog` and `esx_progressbar` import the library for shared runtime helpers.
+- `server.cfg` ensures `esx_lib` before other ESX resources.
+
+## Addon callback pattern
+
+Most updated addons register server callbacks with `xLib.callback.registerCompat(...)` and call them from clients with `xLib.callback(...)`.
+
+```lua
+xLib.callback.registerCompat('esx_accessories:buy', function(source, cb, accessory)
+    cb(BuyAccessory(source, accessory))
+end)
+
+xLib.callback('esx_accessories:buy', false, function(bought)
+    if bought then
+        ESX.ShowNotification('Purchased')
+    end
+end, accessory)
+```
+
+This pattern appears across addons such as accessories, ambulance job, banking, billing, boat, clotheshop, mechanic job, police job, society, vehicleshop and shops.
+
+## Client interaction helpers
+
+Shop-style addons now use `xLib.blips.create(...)` and `xLib.markerZone.create(...)` instead of repeating marker and blip boilerplate.
+
+Resources using this pattern include:
+
+- `esx_accessories`
+- `esx_barbershop`
+- `esx_clotheshop`
+- `esx_mechanicjob`
+- `esx_adminmenu`
+
+`esx_cruisecontrol` and `esx_inventory` use `xLib.addKeybind(...)` for command-backed key mappings.
+
+## NUI helpers
+
+`xLib.nui` is used by NUI-heavy resources to standardize messages, focus handling and callback replies.
+
+Resources using this pattern include:
+
+- `esx_adminmenu`
+- `esx_inventory`
+
+## Server validation helpers
+
+Server-side scripts use `xLib.player` and `xLib.validation` to verify player proximity and sanitize player input before performing privileged actions.
+
+Examples in the current addons:
+
+- `esx_billing` checks whether the billing target is near the source.
+- `esx_boat` checks showroom/garage proximity before buying or storing boats.
+- `esx_mechanicjob` validates job action proximity.
+
+## Vehicle plates
+
+Vehicle-related resources use `xLib.vehiclePlate` to normalize, compare and generate plates consistently before database lookups.
+
+Examples in the current addons:
+
+- `esx_boat` uses `normalize` and `generateUnique`.
+- `esx_lscustom` normalizes plate strings before ownership checks.
+- `esx_adminmenu` normalizes plates for admin vehicle actions.
+
+## Direct dependencies
+
+Several addons declare `esx_lib` as a dependency in `fxmanifest.lua`, including:
+
+- `esx_adminmenu`
+- `esx_banking`
+- `esx_scoreboard`
+- `esx_shops`
+
+Many other addons import `@esx_lib/imports.lua` without declaring a manifest dependency, so load order should still ensure `esx_lib` starts before ESX addons.
