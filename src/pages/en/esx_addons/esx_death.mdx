@@ -1,0 +1,135 @@
+# esx_death
+
+Global ESX death lifecycle resource with persistence, respawn handling, distress calls and a branded NUI death screen.
+
+[Github Link](https://github.com/esx-framework/ESX-Legacy-Addons/tree/main/%5Besx_addons%5D/esx_death)
+
+## Features
+
+- Persists player death state in the database.
+- Shows a global death screen with bleedout, early respawn and distress actions.
+- Supports RP death cleanup for weapons, cash and items.
+- Optional early respawn fine.
+- Optional Medal clip integration.
+- Admin revive commands.
+- Compatibility event for `esx_ambulancejob:clsearch`.
+
+## Configuration
+
+- `Config.Debug`
+    - type: `boolean`
+    - default: `false`
+    - description: Enables debug output.
+- `Config.Locale`
+    - type: `string`
+    - default: `GetConvar('esx:locale', 'en')`
+    - description: Shared ESX language.
+- `Config.DeathAnim`
+    - type: `table`
+    - description: Death animation dictionary, name, flags and playback options.
+- `Config.Medal`
+    - type: `table`
+    - description: Medal clip integration settings.
+- `Config.EarlyRespawnTimer`
+    - type: `number`
+    - default: `60000`
+    - description: Time before early respawn becomes available.
+- `Config.BleedoutTimer`
+    - type: `number`
+    - default: `600000`
+    - description: Time before automatic hospital transfer.
+- `Config.RemoveWeaponsAfterRPDeath`
+    - type: `boolean`
+    - default: `true`
+    - description: Removes weapons after RP death.
+- `Config.RemoveCashAfterRPDeath`
+    - type: `boolean`
+    - default: `true`
+    - description: Removes cash after RP death.
+- `Config.RemoveItemsAfterRPDeath`
+    - type: `boolean`
+    - default: `true`
+    - description: Removes inventory items after RP death.
+- `Config.EarlyRespawnFine`
+    - type: `boolean`
+    - default: `false`
+    - description: Makes early respawn require payment.
+- `Config.EarlyRespawnFineAmount`
+    - type: `number`
+    - default: `5000`
+    - description: Early respawn fee.
+- `Config.RespawnPoints`
+    - type: `table`
+    - description: Hospital respawn locations.
+- `Config.Brand`
+    - type: `table`
+    - description: Text and color used by the death screen.
+- `Config.HoldDuration`
+    - type: `number`
+    - default: `1500`
+    - description: Hold duration in milliseconds for UI actions.
+- `Config.DistressCooldown`
+    - type: `number`
+    - default: `60000`
+    - description: Cooldown between distress calls.
+- `Config.ShowDeathReason`
+    - type: `boolean`
+    - default: `true`
+    - description: Shows player-inflicted death reason text on the death screen.
+- `Config.ShowKillerName`
+    - type: `boolean`
+    - default: `false`
+    - description: Shows the killer name instead of the generic player-killed text.
+- `Config.CameraEnabled`
+    - type: `boolean`
+    - default: `false`
+    - description: Enables the death camera.
+- `Config.AutoMigrate`
+    - type: `boolean`
+    - default: `true`
+    - description: Adds missing `users.is_dead` and `users.death_time` columns on startup.
+
+## Commands
+
+| Command | Permission | Description |
+|---|---|---|
+| `/revive [player]` | `admin` | Revives a player. |
+| `/reviveall` | `admin` | Revives all dead players. |
+
+## Client Exports
+
+```lua
+local isDead = exports.esx_death:IsDead()
+local state = exports.esx_death:GetDeathState()
+```
+
+## Server Exports
+
+```lua
+local isDead = exports.esx_death:IsDead(playerId)
+local state = exports.esx_death:GetDeathState(playerId)
+local players = exports.esx_death:GetDeadPlayers()
+local locations = exports.esx_death:GetDeadPlayerLocations()
+
+exports.esx_death:Revive(playerId)
+exports.esx_death:SetDead(playerId)
+```
+
+## Events and Callbacks
+
+| Name | Direction | Description |
+|---|---|---|
+| `esx:onPlayerDeath` | Client/Server | Consumed by `esx_death` to start the death lifecycle. |
+| `esx_death:sync` | Server -> Client | Sends death state updates to the client. |
+| `esx_death:recover` | Server -> Client | Recovers the player from death state. |
+| `esx_death:getState` | Client callback | Returns the current death state. |
+| `esx_death:respawn` | Client callback | Requests respawn. |
+| `esx_death:distress` | Client callback | Sends a distress call. |
+
+## Requirements
+
+- [es_extended](../esx_core/es_extended)
+- esx_lib
+- oxmysql
+- OneSync
+

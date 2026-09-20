@@ -1,0 +1,76 @@
+# esx_accessorymanager
+
+A standalone radial wardrobe manager for ESX. It lets players quickly remove and restore accessories or clothing parts without replacing `esx_accessories` or changing accessory shops.
+
+[Github Link](https://github.com/esx-framework/ESX-Legacy-Addons/tree/main/%5Besx_addons%5D/esx_accessorymanager)
+
+## Features
+
+- Radial NUI menu opened with **F11** or `/accessories`.
+- Toggle watches, glasses, mask, chain, earrings, pants, shoes, top/arms, hat, bag, undershirt, bracelet and vest.
+- Restores removed items from memory while the current outfit still matches.
+- Uses `skinchanger` exports to read and apply appearance changes.
+- Blocks usage while dead, cuffed, ragdolling, falling, paused, inventory-busy or using another focused NUI.
+- Supports English and Spanish locales.
+
+## Configuration
+
+- `Config.Locale`
+    - type: `string`
+    - default: `"en"`
+    - description: UI language. Use `GetConvar('esx:locale', 'en')` if you want it to follow the server locale.
+- `Config.EnableControls`
+    - type: `boolean`
+    - default: `true`
+    - description: Enables the command/keybind integration.
+- `Config.Radial.Command`
+    - type: `string`
+    - default: `"accessories"`
+    - description: Command used to open the radial menu.
+- `Config.Radial.DefaultKey`
+    - type: `string`
+    - default: `"F11"`
+    - description: Default key mapping.
+- `Config.Radial.ActionCooldown`
+    - type: `number`
+    - default: `350`
+    - description: Cooldown in milliseconds between wardrobe actions.
+- `Config.Radial.AllowInVehicle`
+    - type: `boolean`
+    - default: `false`
+    - description: Allows or blocks the radial menu while the player is in a vehicle.
+- `Config.Radial.Undressed`
+    - type: `table`
+    - description: Male and female fallback clothing values. Adjust these for custom clothing packs.
+- `Config.Radial.Animation`
+    - type: `table`
+    - description: Animation settings for removing and restoring each category.
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `/accessories` | Opens the radial wardrobe menu. |
+
+## Client Exports
+
+```lua
+exports.esx_accessorymanager:OpenAccessoryMenu()
+exports.esx_accessorymanager:CloseAccessoryMenu()
+exports.esx_accessorymanager:InvalidateWardrobe()
+```
+
+`InvalidateWardrobe` clears the remembered removed items. Call it before another resource applies a full outfit directly through exports.
+
+## Events
+
+| Event | Direction | Description |
+|---|---|---|
+| `esx_accessorymanager:openMenu` | Client | Opens the radial wardrobe menu. |
+
+## Requirements
+
+- [es_extended](../esx_core/es_extended)
+- [skinchanger](../esx_core/skinchanger)
+- esx_lib
+

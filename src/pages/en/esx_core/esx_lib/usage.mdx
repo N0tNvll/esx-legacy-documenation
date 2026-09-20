@@ -36,12 +36,15 @@ Shop-style addons now use `xLib.blips.create(...)` and `xLib.markerZone.create(.
 Resources using this pattern include:
 
 - `esx_accessories`
+- `esx_ambulancejob`
 - `esx_barbershop`
 - `esx_clotheshop`
 - `esx_mechanicjob`
 - `esx_adminmenu`
+- `esx_shops`
+- `esx_weaponshop`
 
-`esx_cruisecontrol` and `esx_inventory` use `xLib.addKeybind(...)` for command-backed key mappings.
+`esx_accessorymanager`, `esx_cruisecontrol`, `esx_inventory`, `esx_policejob` and `esx_property` use `xLib.addKeybind(...)` for command-backed key mappings.
 
 ## NUI helpers
 
@@ -49,8 +52,13 @@ Resources using this pattern include:
 
 Resources using this pattern include:
 
+- `esx_accessorymanager`
 - `esx_adminmenu`
+- `esx_dmvschool`
 - `esx_inventory`
+- `esx_pausemenu`
+- `esx_shops`
+- `esx_weaponshop`
 
 ## Server validation helpers
 
@@ -60,6 +68,7 @@ Examples in the current addons:
 
 - `esx_billing` checks whether the billing target is near the source.
 - `esx_boat` checks showroom/garage proximity before buying or storing boats.
+- `esx_joblisting` checks Job Center proximity before applying or quitting jobs.
 - `esx_mechanicjob` validates job action proximity.
 
 ## Vehicle plates
@@ -77,7 +86,10 @@ Examples in the current addons:
 Several addons declare `esx_lib` as a dependency in `fxmanifest.lua`, including:
 
 - `esx_adminmenu`
+- `esx_accessorymanager`
 - `esx_banking`
+- `esx_death`
+- `esx_pausemenu`
 - `esx_scoreboard`
 - `esx_shops`
 

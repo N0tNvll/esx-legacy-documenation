@@ -1,0 +1,91 @@
+# esx_pausemenu
+
+ESX Legacy pause menu NUI for the ESX 1.16.0 resource set. It replaces the default pause entry flow with a branded menu that can open the map, settings, people/scoreboard links and configured external destinations.
+
+[Github Link](https://github.com/esx-framework/ESX-Legacy-Addons/tree/main/%5Besx_addons%5D/esx_pausemenu)
+
+## Features
+
+- Intercepts **ESC** and **P** while the ESX player is loaded.
+- Shows player identity, job, money, bank, playtime and location.
+- Opens the native GTA map and settings screens.
+- Opens `esx_scoreboard` through a configurable command when available.
+- Supports Discord, rules and store links.
+- Reads ESX UI theme colors from `esx_lib`.
+
+## Configuration
+
+- `Config.Brand`
+    - type: `table`
+    - description: Visual copy used by the menu header and side panels.
+- `Config.Text.unemployed`
+    - type: `string`
+    - default: `"Unemployed"`
+    - description: Label used for unemployed players.
+- `Config.Text.unknownJob`
+    - type: `string`
+    - default: `"Unknown"`
+    - description: Fallback job label.
+- `Config.Text.leaveReason`
+    - type: `string`
+    - description: Drop reason used by the leave server action.
+- `Config.Links.discord`
+    - type: `string`
+    - description: Discord URL. Empty disables the destination.
+- `Config.Links.rules`
+    - type: `string`
+    - description: Rules URL. Empty disables the destination.
+- `Config.Links.store`
+    - type: `string`
+    - description: Store URL. Empty disables the destination.
+- `Config.PeopleCommand`
+    - type: `string`
+    - default: `"scoreboard"`
+    - description: Command used by the PEOPLE action.
+- `Config.Controls`
+    - type: `table`
+    - description: GTA/FiveM control IDs intercepted by the pause menu.
+- `Config.ScreenBlurMs`
+    - type: `number`
+    - default: `180`
+    - description: Blur transition duration.
+- `Config.Debug`
+    - type: `boolean`
+    - default: `false`
+    - description: Enables debug output.
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `/esx_pausemenu` | Opens the ESX pause menu. |
+
+## Server Callbacks and Events
+
+| Name | Direction | Description |
+|---|---|---|
+| `esx_pausemenu:getData` | Client -> Server | Returns player data displayed in the pause menu. |
+| `esx_pausemenu:leaveServer` | Client -> Server | Disconnects the player who clicked leave server. |
+
+## Theme ConVars
+
+The menu reads the ESX theme from `esx_lib`. These convars can be set in `server.cfg`:
+
+```cfg
+setr esx:brand-color "#FB9B04"
+setr esx:darkest-color "#161616"
+setr esx:dark-color "#252525"
+setr esx:mid-color "#383838"
+setr esx:light-color "#969696"
+setr esx:lightest-color "#F2F2F2"
+setr esx:ui:primaryColor "#FB9B04"
+setr esx:ui:secondaryColor "#252525"
+setr esx:ui:backgroundColor "#161616"
+setr esx:ui:accentColor "#383838"
+```
+
+## Requirements
+
+- [es_extended](../esx_core/es_extended)
+- esx_lib
+

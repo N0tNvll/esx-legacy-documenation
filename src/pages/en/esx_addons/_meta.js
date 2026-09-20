@@ -4,6 +4,7 @@ export default {
     esx_clotheshop: "Clothes Shop",
     esx_vehicleshop: "Vehicle Shop",
     esx_accessories: "Accessories",
+    esx_accessorymanager: "Accessory Manager",
     esx_hud: "HUD",
     esx_garage: "Garage",
     esx_property: "Property",
@@ -31,8 +32,10 @@ export default {
     esx_cruisecontrol: "Cruise Control",
     esx_lscustom: "LS Custom",
     esx_datastore: "Datastore",
+    esx_death: "Death",
     esx_optionalneeds: "Optional Needs",
     esx_adminmenu: "Admin Menu",
+    esx_pausemenu: "Pause Menu",
     esx_weather: "Weather",
     esx_scoreboard: "Scoreboard",
 
